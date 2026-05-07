@@ -6,6 +6,7 @@
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791)
 ![OAuth2](https://img.shields.io/badge/OAuth2-JWT-4B32C3)
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED)
+[![CI](https://github.com/Aberezhnoy1980/my-bank-app/actions/workflows/ci.yml/badge.svg)](https://github.com/Aberezhnoy1980/my-bank-app/actions/workflows/ci.yml)
 
 Учебный микросервисный проект банка в рамках **module 3 / sprint 9** (Yandex Practicum).
 
@@ -31,7 +32,7 @@
 ## Status
 
 Инициализация репозитория и базового каркаса документации.
-Детальная архитектура и реализация идут в ветке `module_three_sprint_nine_branch` (итерация `9.1A`).
+Детальная архитектура и реализация идут в рабочей ветке проекта.
 
 ## Run (local, dev)
 
@@ -60,7 +61,7 @@ docker compose logs -f gateway
 docker compose down
 ```
 
-## Gateway routes (9.1A.1)
+## Gateway routes
 
 - `/api/accounts/**` -> `accounts-service`
 - `/api/cash/**` -> `cash-service`
