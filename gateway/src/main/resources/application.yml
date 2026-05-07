@@ -3,6 +3,25 @@ spring:
     name: gateway
   config:
     import: optional:configserver:http://localhost:8888
+  cloud:
+    gateway:
+      routes:
+        - id: accounts-service
+          uri: lb://ACCOUNTS-SERVICE
+          predicates:
+            - Path=/api/accounts/**
+        - id: cash-service
+          uri: lb://CASH-SERVICE
+          predicates:
+            - Path=/api/cash/**
+        - id: transfer-service
+          uri: lb://TRANSFER-SERVICE
+          predicates:
+            - Path=/api/transfers/**
+        - id: notifications-service
+          uri: lb://NOTIFICATIONS-SERVICE
+          predicates:
+            - Path=/api/notifications/**
 
 server:
   port: 8081

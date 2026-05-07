@@ -1,0 +1,121 @@
+services:
+  discovery-server:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.module
+      args:
+        MODULE: discovery-server
+    container_name: discovery-server
+    ports:
+      - "8761:8761"
+
+  config-server:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.module
+      args:
+        MODULE: config-server
+    container_name: config-server
+    depends_on:
+      - discovery-server
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka
+    ports:
+      - "8888:8888"
+
+  gateway:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.module
+      args:
+        MODULE: gateway
+    container_name: gateway
+    depends_on:
+      - discovery-server
+      - config-server
+    environment:
+      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka
+    ports:
+      - "8081:8081"
+
+  front:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.module
+      args:
+        MODULE: front
+    container_name: front
+    depends_on:
+      - discovery-server
+      - config-server
+      - gateway
+    environment:
+      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka
+    ports:
+      - "8080:8080"
+
+  accounts-service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.module
+      args:
+        MODULE: accounts-service
+    container_name: accounts-service
+    depends_on:
+      - discovery-server
+      - config-server
+    environment:
+      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka
+    ports:
+      - "8091:8091"
+
+  cash-service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.module
+      args:
+        MODULE: cash-service
+    container_name: cash-service
+    depends_on:
+      - discovery-server
+      - config-server
+    environment:
+      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka
+    ports:
+      - "8092:8092"
+
+  transfer-service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.module
+      args:
+        MODULE: transfer-service
+    container_name: transfer-service
+    depends_on:
+      - discovery-server
+      - config-server
+    environment:
+      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka
+    ports:
+      - "8093:8093"
+
+  notifications-service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.module
+      args:
+        MODULE: notifications-service
+    container_name: notifications-service
+    depends_on:
+      - discovery-server
+      - config-server
+    environment:
+      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka
+    ports:
+      - "8094:8094"
