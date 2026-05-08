@@ -1,5 +1,6 @@
 package com.mybank.front.web;
 
+import com.mybank.front.client.AccountUpdateValidationException;
 import com.mybank.front.client.AccountProfileView;
 import com.mybank.front.client.AccountsGatewayClient;
 import com.mybank.front.client.UpdateAccountProfileRequest;
@@ -42,6 +43,8 @@ public class MainController {
         try {
             accountsGatewayClient.updateCurrentAccount(new UpdateAccountProfileRequest(fullName, birthDate));
             redirectAttributes.addFlashAttribute("successMessage", "Profile updated successfully.");
+        } catch (AccountUpdateValidationException ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", String.join("; ", ex.getErrors()));
         } catch (Exception ex) {
             redirectAttributes.addFlashAttribute("errorMessage", "Profile update failed.");
         }

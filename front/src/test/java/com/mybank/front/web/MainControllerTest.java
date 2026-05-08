@@ -7,7 +7,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
 
+import com.mybank.front.client.AccountUpdateValidationException;
 import com.mybank.front.client.AccountProfileView;
 import com.mybank.front.client.AccountsGatewayClient;
 import com.mybank.front.client.UpdateAccountProfileRequest;
@@ -72,11 +74,27 @@ class MainControllerTest {
                         .param("fullName", "John Smith")
                         .param("birthDate", "1990-01-10"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/"));
+                .andExpect(redirectedUrl("/"))
+                .andExpect(flash().attributeExists("successMessage"));
     }
 
     @Test
-    void shouldRedirectWithErrorWhenUpdateFails() throws Exception {
+    void shouldRedirectWithValidationErrorDetailsWhenUpdateFails() throws Exception {
+        when(accountsGatewayClient.updateCurrentAccount(ArgumentMatchers.any(UpdateAccountProfileRequest.class)))
+                .thenThrow(new AccountUpdateValidationException(
+                        java.util.List.of("birthDate: age must be 18+", "fullName: must not be blank")
+                ));
+
+        mockMvc.perform(post("/profile")
+                        .param("fullName", "")
+                        .param("birthDate", "2012-01-10"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/"))
+                .andExpect(flash().attribute("errorMessage", "birthDate: age must be 18+; fullName: must not be blank"));
+    }
+
+    @Test
+    void shouldRedirectWithGenericErrorWhenUpdateFailsUnexpectedly() throws Exception {
         when(accountsGatewayClient.updateCurrentAccount(ArgumentMatchers.any(UpdateAccountProfileRequest.class)))
                 .thenThrow(new RuntimeException("validation failed"));
 
@@ -84,6 +102,7 @@ class MainControllerTest {
                         .param("fullName", "")
                         .param("birthDate", "2012-01-10"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/"));
+                .andExpect(redirectedUrl("/"))
+                .andExpect(flash().attribute("errorMessage", "Profile update failed."));
     }
 }
