@@ -12,6 +12,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.mybank.front.client.AccountUpdateValidationException;
 import com.mybank.front.client.AccountProfileView;
 import com.mybank.front.client.AccountsGatewayClient;
+import com.mybank.front.client.TransferGatewayClient;
+import com.mybank.front.client.TransferRequest;
+import com.mybank.front.client.TransferResponseView;
+import com.mybank.front.client.TransferValidationException;
 import com.mybank.front.client.UpdateAccountProfileRequest;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -30,6 +34,9 @@ class MainControllerTest {
 
     @MockBean
     private AccountsGatewayClient accountsGatewayClient;
+
+    @MockBean
+    private TransferGatewayClient transferGatewayClient;
 
     @Test
     void shouldRenderMainPageWithAccountData() throws Exception {
@@ -104,5 +111,51 @@ class MainControllerTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/"))
                 .andExpect(flash().attribute("errorMessage", "Profile update failed."));
+    }
+
+    @Test
+    void shouldTransferAndRedirectToMainPage() throws Exception {
+        when(transferGatewayClient.transfer(ArgumentMatchers.any(TransferRequest.class)))
+                .thenReturn(new TransferResponseView(
+                        "TRANSFER_SUCCESS",
+                        "demo.user",
+                        "alice.user",
+                        new BigDecimal("150.00"),
+                        new BigDecimal("9850.00"),
+                        new BigDecimal("5150.00")
+                ));
+
+        mockMvc.perform(post("/transfer")
+                        .param("recipientUsername", "alice.user")
+                        .param("amount", "150.00"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/"))
+                .andExpect(flash().attributeExists("successMessage"));
+    }
+
+    @Test
+    void shouldRedirectWithTransferValidationError() throws Exception {
+        when(transferGatewayClient.transfer(ArgumentMatchers.any(TransferRequest.class)))
+                .thenThrow(new TransferValidationException(java.util.List.of("insufficient funds")));
+
+        mockMvc.perform(post("/transfer")
+                        .param("recipientUsername", "alice.user")
+                        .param("amount", "20000.00"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/"))
+                .andExpect(flash().attribute("errorMessage", "insufficient funds"));
+    }
+
+    @Test
+    void shouldRedirectWithTransferGenericError() throws Exception {
+        when(transferGatewayClient.transfer(ArgumentMatchers.any(TransferRequest.class)))
+                .thenThrow(new RuntimeException("gateway timeout"));
+
+        mockMvc.perform(post("/transfer")
+                        .param("recipientUsername", "alice.user")
+                        .param("amount", "150.00"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/"))
+                .andExpect(flash().attribute("errorMessage", "Transfer failed."));
     }
 }
