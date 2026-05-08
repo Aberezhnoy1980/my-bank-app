@@ -1,8 +1,11 @@
 package com.mybank.accounts.api;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
+import com.mybank.accounts.domain.AccountProfile;
+import com.mybank.accounts.service.AccountProfileService;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -10,13 +13,28 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/accounts")
 public class AccountsController {
 
+    private final AccountProfileService accountProfileService;
+
+    public AccountsController(AccountProfileService accountProfileService) {
+        this.accountProfileService = accountProfileService;
+    }
+
     @GetMapping("/me")
     public AccountProfileResponse getCurrentAccount() {
+        return toResponse(accountProfileService.getCurrentAccount());
+    }
+
+    @PutMapping("/me")
+    public AccountProfileResponse updateCurrentAccount(@Valid @RequestBody UpdateAccountProfileRequest request) {
+        return toResponse(accountProfileService.updateCurrentAccount(request));
+    }
+
+    private AccountProfileResponse toResponse(AccountProfile account) {
         return new AccountProfileResponse(
-                "demo.user",
-                "Demo User",
-                LocalDate.of(1995, 5, 20),
-                new BigDecimal("10000.00")
+                account.username(),
+                account.fullName(),
+                account.birthDate(),
+                account.balance()
         );
     }
 }
