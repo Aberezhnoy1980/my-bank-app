@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Bank App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 24px;
+            background-color: #f7f7f7;
+        }
+        .card {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 16px;
+            max-width: 640px;
+        }
+        .error {
+            color: #b00020;
+        }
+        dl {
+            display: grid;
+            grid-template-columns: 180px 1fr;
+            row-gap: 8px;
+        }
+        dt {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+<div class="card">
+    <h1>My Bank App</h1>
+    <p>Account profile from Accounts service.</p>
+
+    <div th:if="${hasAccount}">
+        <dl>
+            <dt>Username</dt>
+            <dd th:text="${account.username}">demo.user</dd>
+            <dt>Full name</dt>
+            <dd th:text="${account.fullName}">Demo User</dd>
+            <dt>Birth date</dt>
+            <dd th:text="${account.birthDate}">1995-05-20</dd>
+            <dt>Balance</dt>
+            <dd th:text="${account.balance}">10000.00</dd>
+        </dl>
+    </div>
+
+    <p class="error" th:if="${!hasAccount}" th:text="${errorMessage}">
+        Accounts service is unavailable now.
+    </p>
+</div>
+</body>
+</html>
