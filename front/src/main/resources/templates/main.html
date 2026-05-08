@@ -20,6 +20,9 @@
         .error {
             color: #b00020;
         }
+        .success {
+            color: #1b7f39;
+        }
         dl {
             display: grid;
             grid-template-columns: 180px 1fr;
@@ -28,12 +31,37 @@
         dt {
             font-weight: bold;
         }
+        .form-row {
+            margin-top: 12px;
+        }
+        label {
+            display: block;
+            margin-bottom: 4px;
+            font-weight: bold;
+        }
+        input {
+            width: 100%;
+            max-width: 320px;
+            padding: 6px 8px;
+            border: 1px solid #c8c8c8;
+            border-radius: 4px;
+        }
+        button {
+            margin-top: 12px;
+            padding: 8px 14px;
+            border: 0;
+            border-radius: 4px;
+            cursor: pointer;
+            background-color: #2f6fed;
+            color: #fff;
+        }
     </style>
 </head>
 <body>
 <div class="card">
     <h1>My Bank App</h1>
     <p>Account profile from Accounts service.</p>
+    <p class="success" th:if="${successMessage}" th:text="${successMessage}">Profile updated successfully.</p>
 
     <div th:if="${hasAccount}">
         <dl>
@@ -46,9 +74,21 @@
             <dt>Balance</dt>
             <dd th:text="${account.balance}">10000.00</dd>
         </dl>
+
+        <form method="post" action="/profile">
+            <div class="form-row">
+                <label for="fullName">Full name</label>
+                <input id="fullName" name="fullName" type="text" th:value="${account.fullName}" required>
+            </div>
+            <div class="form-row">
+                <label for="birthDate">Birth date</label>
+                <input id="birthDate" name="birthDate" type="date" th:value="${account.birthDate}" required>
+            </div>
+            <button type="submit">Save changes</button>
+        </form>
     </div>
 
-    <p class="error" th:if="${!hasAccount}" th:text="${errorMessage}">
+    <p class="error" th:if="${errorMessage}" th:text="${errorMessage}">
         Accounts service is unavailable now.
     </p>
 </div>

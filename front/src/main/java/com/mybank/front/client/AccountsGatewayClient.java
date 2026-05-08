@@ -22,4 +22,12 @@ public class AccountsGatewayClient {
                 .retrieve()
                 .body(AccountProfileView.class);
     }
+
+    public AccountProfileView updateCurrentAccount(UpdateAccountProfileRequest request) {
+        return restClient.put()
+                .uri("/api/accounts/me")
+                .body(request)
+                .retrieve()
+                .body(AccountProfileView.class);
+    }
 }
