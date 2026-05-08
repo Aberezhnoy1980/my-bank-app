@@ -1,6 +1,6 @@
-package com.mybank.accounts.api;
+package com.mybank.cash.api;
 
-import com.mybank.accounts.service.InsufficientFundsException;
+import com.mybank.cash.service.CashOperationException;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,10 +24,10 @@ public class ApiExceptionHandler {
                 .body(new ApiErrorResponse("Validation failed", errors));
     }
 
-    @ExceptionHandler(InsufficientFundsException.class)
-    public ResponseEntity<ApiErrorResponse> handleInsufficientFunds(InsufficientFundsException ex) {
+    @ExceptionHandler(CashOperationException.class)
+    public ResponseEntity<ApiErrorResponse> handleCashOperation(CashOperationException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new ApiErrorResponse("Balance update failed", List.of(ex.getMessage())));
+                .body(new ApiErrorResponse("Cash operation failed", List.of(ex.getMessage())));
     }
 
     private String formatFieldError(FieldError error) {

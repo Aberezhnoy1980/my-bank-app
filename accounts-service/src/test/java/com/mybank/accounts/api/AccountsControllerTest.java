@@ -84,4 +84,53 @@ class AccountsControllerTest {
                 .andExpect(jsonPath("$.message").value("Validation failed"))
                 .andExpect(jsonPath("$.errors[*]", Matchers.hasItem(Matchers.containsString("fullName"))));
     }
+
+    @Test
+    void shouldDepositToCurrentAccount() throws Exception {
+        String payload = """
+                {
+                  "operationType": "DEPOSIT",
+                  "amount": 150.00
+                }
+                """;
+
+        mockMvc.perform(put("/api/accounts/me/balance")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.balance").value(10150.00));
+    }
+
+    @Test
+    void shouldWithdrawFromCurrentAccount() throws Exception {
+        String payload = """
+                {
+                  "operationType": "WITHDRAW",
+                  "amount": 300.00
+                }
+                """;
+
+        mockMvc.perform(put("/api/accounts/me/balance")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.balance").value(9700.00));
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenInsufficientFunds() throws Exception {
+        String payload = """
+                {
+                  "operationType": "WITHDRAW",
+                  "amount": 20000.00
+                }
+                """;
+
+        mockMvc.perform(put("/api/accounts/me/balance")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Balance update failed"))
+                .andExpect(jsonPath("$.errors[0]").value("insufficient funds"));
+    }
 }

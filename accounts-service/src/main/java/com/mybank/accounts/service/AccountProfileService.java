@@ -27,4 +27,18 @@ public class AccountProfileService {
         return currentAccount.updateAndGet(account ->
                 account.withPersonalData(request.fullName(), request.birthDate()));
     }
+
+    public AccountProfile deposit(BigDecimal amount) {
+        return currentAccount.updateAndGet(account ->
+                account.withBalance(account.balance().add(amount)));
+    }
+
+    public AccountProfile withdraw(BigDecimal amount) {
+        return currentAccount.updateAndGet(account -> {
+            if (account.balance().compareTo(amount) < 0) {
+                throw new InsufficientFundsException("insufficient funds");
+            }
+            return account.withBalance(account.balance().subtract(amount));
+        });
+    }
 }

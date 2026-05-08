@@ -12,4 +12,8 @@ public record AccountProfile(
     public AccountProfile withPersonalData(String newFullName, LocalDate newBirthDate) {
         return new AccountProfile(username, newFullName, newBirthDate, balance);
     }
+
+    public AccountProfile withBalance(BigDecimal newBalance) {
+        return new AccountProfile(username, fullName, birthDate, newBalance);
+    }
 }

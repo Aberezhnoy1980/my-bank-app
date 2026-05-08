@@ -29,6 +29,14 @@ public class AccountsController {
         return toResponse(accountProfileService.updateCurrentAccount(request));
     }
 
+    @PutMapping("/me/balance")
+    public AccountProfileResponse updateCurrentAccountBalance(@Valid @RequestBody UpdateBalanceRequest request) {
+        if (request.operationType() == BalanceOperationType.DEPOSIT) {
+            return toResponse(accountProfileService.deposit(request.amount()));
+        }
+        return toResponse(accountProfileService.withdraw(request.amount()));
+    }
+
     private AccountProfileResponse toResponse(AccountProfile account) {
         return new AccountProfileResponse(
                 account.username(),
