@@ -133,4 +133,30 @@ class AccountsControllerTest {
                 .andExpect(jsonPath("$.message").value("Balance update failed"))
                 .andExpect(jsonPath("$.errors[0]").value("insufficient funds"));
     }
+
+    @Test
+    void shouldGetAccountByUsername() throws Exception {
+        mockMvc.perform(get("/api/accounts/alice.user"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.username").value("alice.user"))
+                .andExpect(jsonPath("$.fullName").value("Alice User"))
+                .andExpect(jsonPath("$.balance").value(5000.00));
+    }
+
+    @Test
+    void shouldUpdateAccountBalanceByUsername() throws Exception {
+        String payload = """
+                {
+                  "operationType": "DEPOSIT",
+                  "amount": 200.00
+                }
+                """;
+
+        mockMvc.perform(put("/api/accounts/alice.user/balance")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.username").value("alice.user"))
+                .andExpect(jsonPath("$.balance").value(5200.00));
+    }
 }

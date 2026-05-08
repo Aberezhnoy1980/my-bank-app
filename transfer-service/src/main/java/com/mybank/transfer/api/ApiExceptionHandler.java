@@ -1,7 +1,6 @@
-package com.mybank.accounts.api;
+package com.mybank.transfer.api;
 
-import com.mybank.accounts.service.InsufficientFundsException;
-import com.mybank.accounts.service.AccountNotFoundException;
+import com.mybank.transfer.service.TransferOperationException;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,16 +24,10 @@ public class ApiExceptionHandler {
                 .body(new ApiErrorResponse("Validation failed", errors));
     }
 
-    @ExceptionHandler(InsufficientFundsException.class)
-    public ResponseEntity<ApiErrorResponse> handleInsufficientFunds(InsufficientFundsException ex) {
+    @ExceptionHandler(TransferOperationException.class)
+    public ResponseEntity<ApiErrorResponse> handleTransferOperation(TransferOperationException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new ApiErrorResponse("Balance update failed", List.of(ex.getMessage())));
-    }
-
-    @ExceptionHandler(AccountNotFoundException.class)
-    public ResponseEntity<ApiErrorResponse> handleAccountNotFound(AccountNotFoundException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(new ApiErrorResponse("Account lookup failed", List.of(ex.getMessage())));
+                .body(new ApiErrorResponse("Transfer failed", List.of(ex.getMessage())));
     }
 
     private String formatFieldError(FieldError error) {

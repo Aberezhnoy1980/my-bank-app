@@ -4,6 +4,7 @@ import com.mybank.accounts.domain.AccountProfile;
 import com.mybank.accounts.service.AccountProfileService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -35,6 +36,22 @@ public class AccountsController {
             return toResponse(accountProfileService.deposit(request.amount()));
         }
         return toResponse(accountProfileService.withdraw(request.amount()));
+    }
+
+    @GetMapping("/{username}")
+    public AccountProfileResponse getAccountByUsername(@PathVariable("username") String username) {
+        return toResponse(accountProfileService.getAccountByUsername(username));
+    }
+
+    @PutMapping("/{username}/balance")
+    public AccountProfileResponse updateAccountBalanceByUsername(
+            @PathVariable("username") String username,
+            @Valid @RequestBody UpdateBalanceRequest request
+    ) {
+        if (request.operationType() == BalanceOperationType.DEPOSIT) {
+            return toResponse(accountProfileService.depositByUsername(username, request.amount()));
+        }
+        return toResponse(accountProfileService.withdrawByUsername(username, request.amount()));
     }
 
     private AccountProfileResponse toResponse(AccountProfile account) {
