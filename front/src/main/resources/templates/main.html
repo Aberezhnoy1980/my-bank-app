@@ -89,6 +89,25 @@
 
         <hr style="margin: 24px 0;">
 
+        <h3>Cash operations</h3>
+        <form method="post" action="/cash/deposit">
+            <div class="form-row">
+                <label for="depositAmount">Deposit amount</label>
+                <input id="depositAmount" name="amount" type="number" step="0.01" min="0.01" required>
+            </div>
+            <button type="submit">Deposit</button>
+        </form>
+
+        <form method="post" action="/cash/withdraw">
+            <div class="form-row">
+                <label for="withdrawAmount">Withdraw amount</label>
+                <input id="withdrawAmount" name="amount" type="number" step="0.01" min="0.01" required>
+            </div>
+            <button type="submit">Withdraw</button>
+        </form>
+
+        <hr style="margin: 24px 0;">
+
         <h3>Transfer money</h3>
         <form method="post" action="/transfer">
             <div class="form-row">

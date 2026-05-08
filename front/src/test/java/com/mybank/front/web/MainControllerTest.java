@@ -12,6 +12,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.mybank.front.client.AccountUpdateValidationException;
 import com.mybank.front.client.AccountProfileView;
 import com.mybank.front.client.AccountsGatewayClient;
+import com.mybank.front.client.CashGatewayClient;
+import com.mybank.front.client.CashOperationResponseView;
+import com.mybank.front.client.CashValidationException;
 import com.mybank.front.client.TransferGatewayClient;
 import com.mybank.front.client.TransferRequest;
 import com.mybank.front.client.TransferResponseView;
@@ -37,6 +40,9 @@ class MainControllerTest {
 
     @MockBean
     private TransferGatewayClient transferGatewayClient;
+
+    @MockBean
+    private CashGatewayClient cashGatewayClient;
 
     @Test
     void shouldRenderMainPageWithAccountData() throws Exception {
@@ -157,5 +163,53 @@ class MainControllerTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/"))
                 .andExpect(flash().attribute("errorMessage", "Transfer failed."));
+    }
+
+    @Test
+    void shouldDepositAndRedirectToMainPage() throws Exception {
+        when(cashGatewayClient.deposit(new BigDecimal("250.00")))
+                .thenReturn(new CashOperationResponseView("DEPOSIT_SUCCESS", new BigDecimal("10250.00")));
+
+        mockMvc.perform(post("/cash/deposit")
+                        .param("amount", "250.00"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/"))
+                .andExpect(flash().attributeExists("successMessage"));
+    }
+
+    @Test
+    void shouldWithdrawAndRedirectToMainPage() throws Exception {
+        when(cashGatewayClient.withdraw(new BigDecimal("100.00")))
+                .thenReturn(new CashOperationResponseView("WITHDRAW_SUCCESS", new BigDecimal("9900.00")));
+
+        mockMvc.perform(post("/cash/withdraw")
+                        .param("amount", "100.00"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/"))
+                .andExpect(flash().attributeExists("successMessage"));
+    }
+
+    @Test
+    void shouldRedirectWithCashValidationError() throws Exception {
+        when(cashGatewayClient.withdraw(new BigDecimal("20000.00")))
+                .thenThrow(new CashValidationException(java.util.List.of("insufficient funds")));
+
+        mockMvc.perform(post("/cash/withdraw")
+                        .param("amount", "20000.00"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/"))
+                .andExpect(flash().attribute("errorMessage", "insufficient funds"));
+    }
+
+    @Test
+    void shouldRedirectWithCashGenericError() throws Exception {
+        when(cashGatewayClient.deposit(new BigDecimal("10.00")))
+                .thenThrow(new RuntimeException("gateway timeout"));
+
+        mockMvc.perform(post("/cash/deposit")
+                        .param("amount", "10.00"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/"))
+                .andExpect(flash().attribute("errorMessage", "Cash operation failed."));
     }
 }

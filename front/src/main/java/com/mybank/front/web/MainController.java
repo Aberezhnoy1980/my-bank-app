@@ -3,6 +3,9 @@ package com.mybank.front.web;
 import com.mybank.front.client.AccountUpdateValidationException;
 import com.mybank.front.client.AccountProfileView;
 import com.mybank.front.client.AccountsGatewayClient;
+import com.mybank.front.client.CashGatewayClient;
+import com.mybank.front.client.CashOperationResponseView;
+import com.mybank.front.client.CashValidationException;
 import com.mybank.front.client.TransferGatewayClient;
 import com.mybank.front.client.TransferRequest;
 import com.mybank.front.client.TransferResponseView;
@@ -22,13 +25,16 @@ public class MainController {
 
     private final AccountsGatewayClient accountsGatewayClient;
     private final TransferGatewayClient transferGatewayClient;
+    private final CashGatewayClient cashGatewayClient;
 
     public MainController(
             AccountsGatewayClient accountsGatewayClient,
-            TransferGatewayClient transferGatewayClient
+            TransferGatewayClient transferGatewayClient,
+            CashGatewayClient cashGatewayClient
     ) {
         this.accountsGatewayClient = accountsGatewayClient;
         this.transferGatewayClient = transferGatewayClient;
+        this.cashGatewayClient = cashGatewayClient;
     }
 
     @GetMapping("/")
@@ -77,6 +83,40 @@ public class MainController {
             redirectAttributes.addFlashAttribute("errorMessage", String.join("; ", ex.getErrors()));
         } catch (Exception ex) {
             redirectAttributes.addFlashAttribute("errorMessage", "Transfer failed.");
+        }
+        return "redirect:/";
+    }
+
+    @PostMapping("/cash/deposit")
+    public String deposit(
+            @RequestParam("amount") BigDecimal amount,
+            RedirectAttributes redirectAttributes
+    ) {
+        return handleCashOperation(amount, redirectAttributes, true);
+    }
+
+    @PostMapping("/cash/withdraw")
+    public String withdraw(
+            @RequestParam("amount") BigDecimal amount,
+            RedirectAttributes redirectAttributes
+    ) {
+        return handleCashOperation(amount, redirectAttributes, false);
+    }
+
+    private String handleCashOperation(BigDecimal amount, RedirectAttributes redirectAttributes, boolean isDeposit) {
+        try {
+            CashOperationResponseView response = isDeposit
+                    ? cashGatewayClient.deposit(amount)
+                    : cashGatewayClient.withdraw(amount);
+            String action = isDeposit ? "Deposit" : "Withdraw";
+            redirectAttributes.addFlashAttribute(
+                    "successMessage",
+                    action + " completed. Current balance: " + response.balance() + "."
+            );
+        } catch (CashValidationException ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", String.join("; ", ex.getErrors()));
+        } catch (Exception ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Cash operation failed.");
         }
         return "redirect:/";
     }
