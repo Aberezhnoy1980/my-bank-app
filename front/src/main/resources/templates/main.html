@@ -76,6 +76,7 @@
         </dl>
 
         <form method="post" action="/profile">
+            <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
             <div class="form-row">
                 <label for="fullName">Full name</label>
                 <input id="fullName" name="fullName" type="text" th:value="${account.fullName}" required>
@@ -91,6 +92,7 @@
 
         <h3>Cash operations</h3>
         <form method="post" action="/cash/deposit">
+            <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
             <div class="form-row">
                 <label for="depositAmount">Deposit amount</label>
                 <input id="depositAmount" name="amount" type="number" step="0.01" min="0.01" required>
@@ -99,6 +101,7 @@
         </form>
 
         <form method="post" action="/cash/withdraw">
+            <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
             <div class="form-row">
                 <label for="withdrawAmount">Withdraw amount</label>
                 <input id="withdrawAmount" name="amount" type="number" step="0.01" min="0.01" required>
@@ -110,6 +113,7 @@
 
         <h3>Transfer money</h3>
         <form method="post" action="/transfer">
+            <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
             <div class="form-row">
                 <label for="recipientUsername">Recipient username</label>
                 <input id="recipientUsername" name="recipientUsername" type="text" placeholder="alice.user" required>

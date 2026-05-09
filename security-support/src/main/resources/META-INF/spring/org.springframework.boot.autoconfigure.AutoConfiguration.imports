@@ -1,0 +1,4 @@
+com.mybank.security.support.ServletOAuth2ResourceServerAutoConfiguration
+com.mybank.security.support.OAuth2ClientSupportAutoConfiguration
+com.mybank.security.support.OAuth2RestClientSupportAutoConfiguration
+com.mybank.security.support.ReactiveOAuth2ResourceServerAutoConfiguration

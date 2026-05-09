@@ -6,12 +6,15 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 
 @Service
 public class AccountProfileService {
 
-    private static final String CURRENT_USERNAME = "demo.user";
+    private static final String FALLBACK_USERNAME = "demo.user";
 
     private final Map<String, AccountProfile> accounts = new ConcurrentHashMap<>(Map.of(
             "demo.user", new AccountProfile(
@@ -29,19 +32,34 @@ public class AccountProfileService {
     ));
 
     public AccountProfile getCurrentAccount() {
-        return getAccountByUsername(CURRENT_USERNAME);
+        return getAccountByUsername(resolveCurrentUsername());
     }
 
     public AccountProfile updateCurrentAccount(UpdateAccountProfileRequest request) {
-        return updateAccountPersonalData(CURRENT_USERNAME, request);
+        return updateAccountPersonalData(resolveCurrentUsername(), request);
     }
 
     public AccountProfile deposit(BigDecimal amount) {
-        return depositByUsername(CURRENT_USERNAME, amount);
+        return depositByUsername(resolveCurrentUsername(), amount);
     }
 
     public AccountProfile withdraw(BigDecimal amount) {
-        return withdrawByUsername(CURRENT_USERNAME, amount);
+        return withdrawByUsername(resolveCurrentUsername(), amount);
+    }
+
+    private String resolveCurrentUsername() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth instanceof JwtAuthenticationToken jwt) {
+            String preferred = jwt.getToken().getClaimAsString("preferred_username");
+            if (preferred != null && !preferred.isBlank()) {
+                return preferred;
+            }
+            String sub = jwt.getToken().getSubject();
+            if (sub != null && !sub.isBlank()) {
+                return sub;
+            }
+        }
+        return FALLBACK_USERNAME;
     }
 
     public AccountProfile getAccountByUsername(String username) {

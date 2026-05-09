@@ -11,6 +11,7 @@
     <description>Microservices bank application (module 3, sprint 9)</description>
 
     <modules>
+        <module>security-support</module>
         <module>front</module>
         <module>gateway</module>
         <module>discovery-server</module>

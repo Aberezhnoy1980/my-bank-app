@@ -25,3 +25,30 @@ management:
     web:
       exposure:
         include: health,info
+
+---
+spring:
+  config:
+    activate:
+      on-profile: secure
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8090/realms/mybank}
+      client:
+        registration:
+          services-client:
+            provider: keycloak
+            client-id: mybank-services
+            client-secret: ${KEYCLOAK_SERVICE_SECRET:services-secret-change-me}
+            authorization-grant-type: client_credentials
+            scope: openid
+        provider:
+          keycloak:
+            issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8090/realms/mybank}
+app:
+  security:
+    enabled: true
+  oauth2:
+    client-registration-id: services-client

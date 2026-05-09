@@ -1,4 +1,16 @@
 services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0.7
+    container_name: keycloak
+    command: start-dev --import-realm
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    volumes:
+      - ./docker/keycloak:/opt/keycloak/data/import
+    ports:
+      - "8090:8080"
+
   discovery-server:
     build:
       context: .

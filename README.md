@@ -39,6 +39,7 @@
 | Gateway | 8081 |
 | Config Server | 8888 |
 | Eureka | 8761 |
+| Keycloak (optional, `secure`) | 8090 |
 | accounts-service | 8091 |
 | cash-service | 8092 |
 | transfer-service | 8093 |
@@ -85,11 +86,35 @@ docker compose down
 
 Фронт открывается по адресу `http://localhost:8080` после запуска нужных сервисов (через Gateway ходят клиенты во все перечисленные API).
 
+## OAuth2 и Keycloak (профиль `secure`)
+
+По умолчанию `app.security.enabled=false`: JWT не проверяется, удобно для CI и локальной отладки без IdP.
+
+Чтобы включить защиту на JWT от Keycloak:
+
+1. Подними Keycloak (образ в `docker-compose.yml`, импорт realm из `docker/keycloak/mybank-realm.json`). Админ-консоль: `http://localhost:8090` (user/password из переменных в compose).
+2. Запусти сервисы с профилем **`secure`** и общим issuer, например:
+
+   `KEYCLOAK_ISSUER_URI=http://localhost:8090/realms/mybank`
+
+   Для JVM-сервисов можно передать то же значение через переменную окружения или `-Dspring.profiles.active=secure`.
+
+Клиенты в импорте realm (меняй секреты для своего окружения):
+
+| Client ID | Назначение | Secret (дефолт в YAML) |
+| --------- | ---------- | ----------------------- |
+| `mybank-front` | браузерный login (`authorization_code`) на Front | `front-secret-change-me` |
+| `mybank-services` | `client_credentials` между микросервисами | `services-secret-change-me` |
+
+Пользователи realm для совпадения с демо-данными: `demo.user` / `demo`, `alice.user` / `alice`.
+
+Типичный поток: пользователь логинится через Front → Gateway проверяет JWT → downstream сервисы получают тот же Bearer при вызовах через Gateway; `preferred_username` в токене сопоставляется с username аккаунта (`demo.user`, `alice.user`). При профиле `secure` примеры `curl` ниже требуют заголовок `Authorization: Bearer <access_token>` (удобнее получить токен через UI или напрямую из Keycloak).
+
 ## Smoke check (через Gateway, порт 8081)
 
 Перед проверкой должны быть запущены Eureka, Config Server, Gateway и целевые микросервисы.
 
-Примеры (демо-аккаунты по умолчанию включают в том числе `demo.user` и `alice.user`):
+Примеры в режиме **без** профиля `secure` (демо-аккаунты по умолчанию включают в том числе `demo.user` и `alice.user`):
 
 ```bash
 curl -s http://localhost:8081/actuator/health
