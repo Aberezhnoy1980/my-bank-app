@@ -1,5 +1,6 @@
 package com.mybank.accounts.api;
 
+import com.mybank.accounts.client.NotificationsClient;
 import com.mybank.accounts.domain.AccountProfile;
 import com.mybank.accounts.service.AccountProfileService;
 import jakarta.validation.Valid;
@@ -15,9 +16,14 @@ import org.springframework.web.bind.annotation.RestController;
 public class AccountsController {
 
     private final AccountProfileService accountProfileService;
+    private final NotificationsClient notificationsClient;
 
-    public AccountsController(AccountProfileService accountProfileService) {
+    public AccountsController(
+            AccountProfileService accountProfileService,
+            NotificationsClient notificationsClient
+    ) {
         this.accountProfileService = accountProfileService;
+        this.notificationsClient = notificationsClient;
     }
 
     @GetMapping("/me")
@@ -27,15 +33,21 @@ public class AccountsController {
 
     @PutMapping("/me")
     public AccountProfileResponse updateCurrentAccount(@Valid @RequestBody UpdateAccountProfileRequest request) {
-        return toResponse(accountProfileService.updateCurrentAccount(request));
+        AccountProfileResponse response = toResponse(accountProfileService.updateCurrentAccount(request));
+        notificationsClient.send("ACCOUNT_PROFILE_UPDATED", "Profile updated for " + response.username());
+        return response;
     }
 
     @PutMapping("/me/balance")
     public AccountProfileResponse updateCurrentAccountBalance(@Valid @RequestBody UpdateBalanceRequest request) {
+        AccountProfileResponse response;
         if (request.operationType() == BalanceOperationType.DEPOSIT) {
-            return toResponse(accountProfileService.deposit(request.amount()));
+            response = toResponse(accountProfileService.deposit(request.amount()));
+        } else {
+            response = toResponse(accountProfileService.withdraw(request.amount()));
         }
-        return toResponse(accountProfileService.withdraw(request.amount()));
+        notificationsClient.send("ACCOUNT_BALANCE_UPDATED", "Balance updated for " + response.username());
+        return response;
     }
 
     @GetMapping("/{username}")
@@ -48,10 +60,14 @@ public class AccountsController {
             @PathVariable("username") String username,
             @Valid @RequestBody UpdateBalanceRequest request
     ) {
+        AccountProfileResponse response;
         if (request.operationType() == BalanceOperationType.DEPOSIT) {
-            return toResponse(accountProfileService.depositByUsername(username, request.amount()));
+            response = toResponse(accountProfileService.depositByUsername(username, request.amount()));
+        } else {
+            response = toResponse(accountProfileService.withdrawByUsername(username, request.amount()));
         }
-        return toResponse(accountProfileService.withdrawByUsername(username, request.amount()));
+        notificationsClient.send("ACCOUNT_BALANCE_UPDATED", "Balance updated for " + response.username());
+        return response;
     }
 
     private AccountProfileResponse toResponse(AccountProfile account) {

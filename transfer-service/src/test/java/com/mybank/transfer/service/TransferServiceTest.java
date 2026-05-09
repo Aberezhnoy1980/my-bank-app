@@ -9,6 +9,7 @@ import com.mybank.transfer.api.TransferRequest;
 import com.mybank.transfer.api.TransferResponse;
 import com.mybank.transfer.client.AccountProfileView;
 import com.mybank.transfer.client.AccountsClient;
+import com.mybank.transfer.client.NotificationsClient;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,12 +19,14 @@ import org.mockito.Mockito;
 class TransferServiceTest {
 
     private AccountsClient accountsClient;
+    private NotificationsClient notificationsClient;
     private TransferService transferService;
 
     @BeforeEach
     void setUp() {
         accountsClient = Mockito.mock(AccountsClient.class);
-        transferService = new TransferService(accountsClient, "demo.user");
+        notificationsClient = Mockito.mock(NotificationsClient.class);
+        transferService = new TransferService(accountsClient, notificationsClient, "demo.user");
     }
 
     @Test
