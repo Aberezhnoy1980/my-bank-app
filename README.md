@@ -110,6 +110,8 @@ docker compose down
 
 Типичный поток: пользователь логинится через Front → Gateway проверяет JWT → downstream сервисы получают тот же Bearer при вызовах через Gateway; `preferred_username` в токене сопоставляется с username аккаунта (`demo.user`, `alice.user`). При профиле `secure` примеры `curl` ниже требуют заголовок `Authorization: Bearer <access_token>` (удобнее получить токен через UI или напрямую из Keycloak).
 
+**Подробный smoke-тест с профилем `secure`:** пошаговый сценарий, контуры запуска (хост / Docker), получение токена, типичные ошибки (`invalid_grant`, 401 из Front, `RestClient` и LoadBalancer, Keycloak admin vs login приложения) и проверка refresh после нескольких минут — в отдельном документе **[docs/SMOKE_CHECK_SECURE.md](docs/SMOKE_CHECK_SECURE.md)**.
+
 ## Smoke check (через Gateway, порт 8081)
 
 Перед проверкой должны быть запущены Eureka, Config Server, Gateway и целевые микросервисы.

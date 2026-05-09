@@ -1,3 +1,9 @@
+# Outbound REST from containers must use Compose DNS names, not localhost.
+x-gateway-clients-env: &gateway_clients_env
+  APP_ACCOUNTS_BASE_URL: http://gateway:8081
+  APP_NOTIFICATIONS_BASE_URL: http://gateway:8081
+  APP_GATEWAY_BASE_URL: http://gateway:8081
+
 services:
   keycloak:
     image: quay.io/keycloak/keycloak:26.0.7
@@ -63,6 +69,7 @@ services:
       - config-server
       - gateway
     environment:
+      <<: *gateway_clients_env
       SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka
     ports:
@@ -78,7 +85,9 @@ services:
     depends_on:
       - discovery-server
       - config-server
+      - gateway
     environment:
+      <<: *gateway_clients_env
       SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka
     ports:
@@ -94,7 +103,9 @@ services:
     depends_on:
       - discovery-server
       - config-server
+      - gateway
     environment:
+      <<: *gateway_clients_env
       SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka
     ports:
@@ -110,7 +121,9 @@ services:
     depends_on:
       - discovery-server
       - config-server
+      - gateway
     environment:
+      <<: *gateway_clients_env
       SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka
     ports:

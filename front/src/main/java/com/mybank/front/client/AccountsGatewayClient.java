@@ -3,7 +3,7 @@ package com.mybank.front.client;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Collections;
 import java.util.List;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
@@ -15,11 +15,10 @@ public class AccountsGatewayClient {
     private final ObjectMapper objectMapper;
 
     public AccountsGatewayClient(
-            RestClient.Builder restClientBuilder,
-            ObjectMapper objectMapper,
-            @Value("${app.gateway.base-url}") String gatewayBaseUrl
+            @Qualifier("gatewayRestClient") RestClient restClient,
+            ObjectMapper objectMapper
     ) {
-        this.restClient = restClientBuilder.baseUrl(gatewayBaseUrl).build();
+        this.restClient = restClient;
         this.objectMapper = objectMapper;
     }
 

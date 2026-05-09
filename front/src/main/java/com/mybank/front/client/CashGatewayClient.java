@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
@@ -16,11 +16,10 @@ public class CashGatewayClient {
     private final ObjectMapper objectMapper;
 
     public CashGatewayClient(
-            RestClient.Builder restClientBuilder,
-            ObjectMapper objectMapper,
-            @Value("${app.gateway.base-url}") String gatewayBaseUrl
+            @Qualifier("gatewayRestClient") RestClient restClient,
+            ObjectMapper objectMapper
     ) {
-        this.restClient = restClientBuilder.baseUrl(gatewayBaseUrl).build();
+        this.restClient = restClient;
         this.objectMapper = objectMapper;
     }
 

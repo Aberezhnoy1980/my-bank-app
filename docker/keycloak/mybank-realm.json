@@ -42,7 +42,11 @@
     {
       "username": "demo.user",
       "enabled": true,
+      "email": "demo.user@example.com",
+      "firstName": "Demo",
+      "lastName": "User",
       "emailVerified": true,
+      "requiredActions": [],
       "credentials": [
         {
           "type": "password",
@@ -54,7 +58,11 @@
     {
       "username": "alice.user",
       "enabled": true,
+      "email": "alice.user@example.com",
+      "firstName": "Alice",
+      "lastName": "User",
       "emailVerified": true,
+      "requiredActions": [],
       "credentials": [
         {
           "type": "password",
