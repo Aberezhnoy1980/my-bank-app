@@ -129,13 +129,21 @@ services:
         MODULE: cash-service
     container_name: cash-service
     depends_on:
-      - discovery-server
-      - config-server
-      - gateway
+      postgres:
+        condition: service_healthy
+      discovery-server:
+        condition: service_started
+      config-server:
+        condition: service_started
+      gateway:
+        condition: service_started
     environment:
       <<: *gateway_clients_env
       SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/mybank
+      SPRING_DATASOURCE_USERNAME: mybank
+      SPRING_DATASOURCE_PASSWORD: mybank
     ports:
       - "8092:8092"
 
@@ -147,13 +155,21 @@ services:
         MODULE: transfer-service
     container_name: transfer-service
     depends_on:
-      - discovery-server
-      - config-server
-      - gateway
+      postgres:
+        condition: service_healthy
+      discovery-server:
+        condition: service_started
+      config-server:
+        condition: service_started
+      gateway:
+        condition: service_started
     environment:
       <<: *gateway_clients_env
       SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/mybank
+      SPRING_DATASOURCE_USERNAME: mybank
+      SPRING_DATASOURCE_PASSWORD: mybank
     ports:
       - "8093:8093"
 

@@ -2,6 +2,8 @@ package com.mybank.transfer.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -10,23 +12,28 @@ import com.mybank.transfer.api.TransferResponse;
 import com.mybank.transfer.client.AccountProfileView;
 import com.mybank.transfer.client.AccountsClient;
 import com.mybank.transfer.client.NotificationsClient;
+import com.mybank.transfer.persistence.TransferRecordEntity;
+import com.mybank.transfer.persistence.TransferRecordRepository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
 class TransferServiceTest {
 
     private AccountsClient accountsClient;
     private NotificationsClient notificationsClient;
+    private TransferRecordRepository transferRecordRepository;
     private TransferService transferService;
 
     @BeforeEach
     void setUp() {
         accountsClient = Mockito.mock(AccountsClient.class);
         notificationsClient = Mockito.mock(NotificationsClient.class);
-        transferService = new TransferService(accountsClient, notificationsClient, "demo.user");
+        transferRecordRepository = Mockito.mock(TransferRecordRepository.class);
+        transferService = new TransferService(accountsClient, notificationsClient, transferRecordRepository, "demo.user");
     }
 
     @Test
@@ -42,6 +49,13 @@ class TransferServiceTest {
         assertEquals("TRANSFER_SUCCESS", response.status());
         assertEquals(new BigDecimal("9800.00"), response.senderBalance());
         assertEquals(new BigDecimal("5200.00"), response.recipientBalance());
+
+        ArgumentCaptor<TransferRecordEntity> recordCaptor = ArgumentCaptor.forClass(TransferRecordEntity.class);
+        verify(transferRecordRepository).save(recordCaptor.capture());
+        TransferRecordEntity saved = recordCaptor.getValue();
+        assertEquals("demo.user", saved.getSenderUsername());
+        assertEquals("alice.user", saved.getRecipientUsername());
+        assertEquals(new BigDecimal("200.00"), saved.getAmount());
     }
 
     @Test
@@ -49,6 +63,7 @@ class TransferServiceTest {
         TransferRequest request = new TransferRequest("demo.user", new BigDecimal("100.00"));
 
         assertThrows(TransferOperationException.class, () -> transferService.transfer(request));
+        verify(transferRecordRepository, never()).save(any());
     }
 
     @Test
@@ -64,6 +79,7 @@ class TransferServiceTest {
         assertThrows(TransferOperationException.class, () -> transferService.transfer(request));
 
         verify(accountsClient).deposit("demo.user", new BigDecimal("100.00"));
+        verify(transferRecordRepository, never()).save(any());
     }
 
     private AccountProfileView profile(String username, String balance) {

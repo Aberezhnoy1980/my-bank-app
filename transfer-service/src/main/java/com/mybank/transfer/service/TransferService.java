@@ -5,6 +5,8 @@ import com.mybank.transfer.api.TransferResponse;
 import com.mybank.transfer.client.AccountProfileView;
 import com.mybank.transfer.client.AccountsClient;
 import com.mybank.transfer.client.NotificationsClient;
+import com.mybank.transfer.persistence.TransferRecordEntity;
+import com.mybank.transfer.persistence.TransferRecordRepository;
 import java.util.Objects;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
@@ -17,15 +19,18 @@ public class TransferService {
 
     private final AccountsClient accountsClient;
     private final NotificationsClient notificationsClient;
+    private final TransferRecordRepository transferRecordRepository;
     private final String senderUsername;
 
     public TransferService(
             AccountsClient accountsClient,
             NotificationsClient notificationsClient,
+            TransferRecordRepository transferRecordRepository,
             @Value("${app.transfer.sender-username}") String senderUsername
     ) {
         this.accountsClient = accountsClient;
         this.notificationsClient = notificationsClient;
+        this.transferRecordRepository = transferRecordRepository;
         this.senderUsername = senderUsername;
     }
 
@@ -39,6 +44,7 @@ public class TransferService {
         AccountProfileView senderAfterWithdraw = accountsClient.withdraw(sender, request.amount());
         try {
             AccountProfileView recipientAfterDeposit = accountsClient.deposit(request.recipientUsername(), request.amount());
+            transferRecordRepository.save(new TransferRecordEntity(sender, request.recipientUsername(), request.amount()));
             return new TransferResponse(
                     "TRANSFER_SUCCESS",
                     sender,

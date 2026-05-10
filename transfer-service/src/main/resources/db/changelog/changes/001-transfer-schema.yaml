@@ -1,0 +1,43 @@
+databaseChangeLog:
+  - changeSet:
+      id: transfer-001-create-schema
+      author: mybank
+      changes:
+        - sql:
+            sql: CREATE SCHEMA IF NOT EXISTS transfer
+
+  - changeSet:
+      id: transfer-002-transfer-record-table
+      author: mybank
+      changes:
+        - createTable:
+            schemaName: transfer
+            tableName: transfer_record
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: sender_username
+                  type: varchar(128)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: recipient_username
+                  type: varchar(128)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: amount
+                  type: numeric(19, 2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false

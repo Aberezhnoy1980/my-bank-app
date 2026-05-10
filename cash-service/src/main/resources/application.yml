@@ -1,6 +1,21 @@
 spring:
   application:
     name: cash-service
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:mybank}
+    username: ${POSTGRES_USER:mybank}
+    password: ${POSTGRES_PASSWORD:mybank}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate.default_schema: cash
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+    default-schema: cash
+    liquibase-schema: public
   config:
     import: optional:configserver:http://localhost:8888
 
@@ -17,6 +32,8 @@ app:
     base-url: ${APP_ACCOUNTS_BASE_URL:http://localhost:8081}
   notifications:
     base-url: ${APP_NOTIFICATIONS_BASE_URL:http://localhost:8081}
+  cash:
+    fallback-username: demo.user
 
 management:
   endpoints:
