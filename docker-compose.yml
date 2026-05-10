@@ -32,10 +32,23 @@ services:
     environment:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
+      # Один и тот же iss в JWT для запросов с хоста (localhost:8090) и из Docker-сети (keycloak:8080).
+      KC_HOSTNAME_URL: http://localhost:8090
     volumes:
       - ./docker/keycloak:/opt/keycloak/data/import
     ports:
       - "8090:8080"
+    healthcheck:
+      # Образ без curl: проверяем, что HTTP уже отдаёт OIDC discovery по нужному realm (как при старте Spring).
+      test:
+        [
+          "CMD-SHELL",
+          'exec 3<>/dev/tcp/127.0.0.1/8080 && printf "GET /realms/mybank/.well-known/openid-configuration HTTP/1.0\r\nHost: localhost\r\nConnection: close\r\n\r\n" >&3 && head -1 <&3 | grep -q "HTTP/1.[01] 200"',
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 36
+      start_period: 120s
 
   discovery-server:
     build:
@@ -72,7 +85,7 @@ services:
       - discovery-server
       - config-server
     environment:
-      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+      CONFIG_SERVER_HOST: config-server
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka
     ports:
       - "8081:8081"
@@ -90,7 +103,7 @@ services:
       - gateway
     environment:
       <<: *gateway_clients_env
-      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+      CONFIG_SERVER_HOST: config-server
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka
     ports:
       - "8080:8080"
@@ -113,7 +126,7 @@ services:
         condition: service_started
     environment:
       <<: *gateway_clients_env
-      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+      CONFIG_SERVER_HOST: config-server
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/mybank
       SPRING_DATASOURCE_USERNAME: mybank
@@ -139,7 +152,7 @@ services:
         condition: service_started
     environment:
       <<: *gateway_clients_env
-      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+      CONFIG_SERVER_HOST: config-server
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/mybank
       SPRING_DATASOURCE_USERNAME: mybank
@@ -165,7 +178,7 @@ services:
         condition: service_started
     environment:
       <<: *gateway_clients_env
-      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+      CONFIG_SERVER_HOST: config-server
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/mybank
       SPRING_DATASOURCE_USERNAME: mybank
@@ -188,7 +201,7 @@ services:
       config-server:
         condition: service_started
     environment:
-      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+      CONFIG_SERVER_HOST: config-server
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/mybank
       SPRING_DATASOURCE_USERNAME: mybank

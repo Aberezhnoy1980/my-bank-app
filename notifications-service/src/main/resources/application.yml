@@ -1,61 +1,7 @@
 spring:
   application:
     name: notifications-service
-  datasource:
-    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:mybank}
-    username: ${POSTGRES_USER:mybank}
-    password: ${POSTGRES_PASSWORD:mybank}
-    driver-class-name: org.postgresql.Driver
-  jpa:
-    hibernate:
-      ddl-auto: validate
-    open-in-view: false
-    properties:
-      hibernate.default_schema: notifications
-  liquibase:
-    change-log: classpath:db/changelog/db.changelog-master.yaml
-    default-schema: notifications
-    liquibase-schema: public
   config:
-    import: optional:configserver:http://localhost:8888
-
-server:
-  port: 8094
-
-eureka:
-  client:
-    service-url:
-      defaultZone: http://localhost:8761/eureka
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info
-
----
-spring:
-  config:
-    activate:
-      on-profile: secure
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8090/realms/mybank}
-      client:
-        registration:
-          services-client:
-            provider: keycloak
-            client-id: mybank-services
-            client-secret: ${KEYCLOAK_SERVICE_SECRET:services-secret-change-me}
-            authorization-grant-type: client_credentials
-            scope: openid
-        provider:
-          keycloak:
-            issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8090/realms/mybank}
-app:
-  security:
-    enabled: true
-  oauth2:
-    client-registration-id: services-client
+    import:
+      - classpath:application-local.yml
+      - optional:configserver:http://${CONFIG_SERVER_HOST:localhost}:8888

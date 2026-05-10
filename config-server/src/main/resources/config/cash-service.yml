@@ -1,0 +1,54 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:mybank}
+    username: ${POSTGRES_USER:mybank}
+    password: ${POSTGRES_PASSWORD:mybank}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate.default_schema: cash
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+    default-schema: cash
+    liquibase-schema: public
+
+server:
+  port: 8092
+
+app:
+  accounts:
+    base-url: ${APP_ACCOUNTS_BASE_URL:http://localhost:8081}
+  notifications:
+    base-url: ${APP_NOTIFICATIONS_BASE_URL:http://localhost:8081}
+  cash:
+    fallback-username: demo.user
+
+---
+spring:
+  config:
+    activate:
+      on-profile: secure
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8090/realms/mybank}
+      client:
+        registration:
+          services-client:
+            provider: keycloak
+            client-id: mybank-services
+            client-secret: ${KEYCLOAK_SERVICE_SECRET:services-secret-change-me}
+            authorization-grant-type: client_credentials
+            scope: openid
+        provider:
+          keycloak:
+            issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8090/realms/mybank}
+app:
+  security:
+    enabled: true
+  oauth2:
+    client-registration-id: services-client

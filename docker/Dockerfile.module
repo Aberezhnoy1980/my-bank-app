@@ -7,7 +7,8 @@ ARG MODULE
 # Pick Spring Boot repackaged executable jar (exclude *-plain.jar). Avoids COPY *.jar picking the wrong artifact.
 RUN mvn -q -pl "${MODULE}" -am -DskipTests package \
     && executable="$(find "/workspace/${MODULE}/target" -maxdepth 1 -type f \
-          \( -name "${MODULE}-*.jar" ! -name "*-plain.jar" \) | head -n 1)" \
+          \( -name "${MODULE}-*.jar" ! -name "*-plain.jar" ! -name "*-stubs.jar" \) \
+          | sort | head -n 1)" \
     && test -n "${executable}" \
     && cp "${executable}" /workspace/executable.jar
 

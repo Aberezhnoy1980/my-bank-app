@@ -111,7 +111,21 @@ docker compose down
 
 Профиль **`secure`** и секреты задаются в **`environment`** сервисов в Compose (или через файл окружения для подстановки в compose). Для вызовов **между контейнерами** базовый URL Gateway — **`http://gateway:8081`**, а не **`http://localhost:8081`**: внутри контейнера **`localhost`** указывает на сам контейнер.
 
-Детали — в **`docker-compose.yml`** и комментариях в репозитории.
+Рекомендуемый запуск:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.secure.yml up --build -d
+```
+
+Где **`docker-compose.secure.yml`** включает профиль `secure` и параметры Keycloak для `front`, `gateway` и backend-сервисов.
+
+Для быстрого повтора можно использовать `Makefile`:
+
+```bash
+make up-secure
+make smoke-c
+make down-secure
+```
 
 ---
 

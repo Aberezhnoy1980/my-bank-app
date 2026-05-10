@@ -2,48 +2,6 @@ spring:
   application:
     name: front
   config:
-    import: optional:configserver:http://localhost:8888
-
-server:
-  port: 8080
-
-eureka:
-  client:
-    service-url:
-      defaultZone: http://localhost:8761/eureka
-
-app:
-  security:
-    mode: oauth2-login
-    enabled: false
-  gateway:
-    base-url: ${APP_GATEWAY_BASE_URL:http://localhost:8081}
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info
-
----
-spring:
-  config:
-    activate:
-      on-profile: secure
-  security:
-    oauth2:
-      client:
-        registration:
-          keycloak:
-            provider: keycloak
-            client-id: mybank-front
-            client-secret: ${KEYCLOAK_FRONT_SECRET:front-secret-change-me}
-            scope: openid,profile
-            authorization-grant-type: authorization_code
-            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
-        provider:
-          keycloak:
-            issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8090/realms/mybank}
-app:
-  security:
-    enabled: true
+    import:
+      - classpath:application-local.yml
+      - optional:configserver:http://${CONFIG_SERVER_HOST:localhost}:8888
