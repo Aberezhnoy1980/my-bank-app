@@ -1,0 +1,23 @@
+spring:
+  cloud:
+    discovery:
+      enabled: false
+    client:
+      hostname: localhost
+      ip-address: 127.0.0.1
+    config:
+      enabled: false
+  datasource:
+    url: jdbc:h2:mem:mybank_notifications;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    properties:
+      hibernate.default_schema: notifications
+  config:
+    import: ""
+
+eureka:
+  client:
+    enabled: false

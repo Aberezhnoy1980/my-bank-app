@@ -1,6 +1,21 @@
 spring:
   application:
     name: notifications-service
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:mybank}
+    username: ${POSTGRES_USER:mybank}
+    password: ${POSTGRES_PASSWORD:mybank}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate.default_schema: notifications
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+    default-schema: notifications
+    liquibase-schema: public
   config:
     import: optional:configserver:http://localhost:8888
 
