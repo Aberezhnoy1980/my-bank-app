@@ -24,12 +24,11 @@
 
 - Java 21
 - Spring Boot, Spring Cloud
-- Spring Data JPA + Hibernate (целевой слой персистентности по курсу)
-- PostgreSQL
+- Spring Data JPA + Hibernate
+- PostgreSQL (одна БД `mybank`, отдельные **schemas** на сервис с данными: `accounts`, `notifications`), миграции **Liquibase**
 - OAuth2 (Authorization Code + Client Credentials)
+- Контрактные тесты **Spring Cloud Contract** (producer: `accounts-service`, consumer: `cash-service` против stubs)
 - Docker / Docker Compose
-
-На текущем этапе доменные данные аккаунтов могут храниться в упрощённом виде (например, in-memory для быстрой интеграции сервисов); переход на JPA и PostgreSQL идёт по мере развития проекта.
 
 ## Ports (локально по умолчанию)
 
@@ -47,10 +46,11 @@
 
 ## Status
 
-Инициализация репозитория и базового каркаса документации.
-Детальная архитектура и реализация идут в рабочей ветке проекта.
+Рабочая ветка: микросервисы, Gateway, OAuth2/Keycloak (профиль `secure`), персистентность Accounts/Notifications, контрактные тесты Cash → Accounts.
 
 ## Run (local, dev)
+
+Для **`accounts-service`** и **`notifications-service`** нужен доступный PostgreSQL (или контейнер из `docker compose up postgres`). Строка подключения по умолчанию: `jdbc:postgresql://localhost:5432/mybank`, пользователь/пароль `mybank`/`mybank` (как в Compose).
 
 1. Запусти `discovery-server`.
 2. Запусти `config-server`.
