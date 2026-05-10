@@ -29,7 +29,7 @@
 - Spring Data JPA + Hibernate
 - PostgreSQL (одна БД `mybank`, отдельные **schemas** на сервис с данными: `accounts`, `notifications`), миграции **Liquibase**
 - OAuth2 (Authorization Code + Client Credentials)
-- Контрактные тесты **Spring Cloud Contract** (producer: `accounts-service`, consumer: `cash-service` против stubs)
+- Контрактные тесты **Spring Cloud Contract** (producer: `accounts-service`; consumers: `cash-service`, `transfer-service` против stubs)
 - Docker / Docker Compose
 
 ## Ports (локально по умолчанию)
@@ -48,7 +48,7 @@
 
 ## Status
 
-Рабочая ветка: микросервисы, Gateway, OAuth2/Keycloak (профиль `secure`), персистентность Accounts/Notifications, контрактные тесты Cash → Accounts.
+Рабочая ветка: микросервисы, Gateway, OAuth2/Keycloak (профиль `secure`), персистентность Accounts/Notifications, контрактные тесты Cash/Transfer → Accounts.
 
 ## Run (local, dev)
 
