@@ -4,7 +4,27 @@ x-gateway-clients-env: &gateway_clients_env
   APP_NOTIFICATIONS_BASE_URL: http://gateway:8081
   APP_GATEWAY_BASE_URL: http://gateway:8081
 
+volumes:
+  postgres_data: {}
+
 services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres
+    environment:
+      POSTGRES_DB: mybank
+      POSTGRES_USER: mybank
+      POSTGRES_PASSWORD: mybank
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mybank -d mybank"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   keycloak:
     image: quay.io/keycloak/keycloak:26.0.7
     container_name: keycloak
@@ -83,13 +103,21 @@ services:
         MODULE: accounts-service
     container_name: accounts-service
     depends_on:
-      - discovery-server
-      - config-server
-      - gateway
+      postgres:
+        condition: service_healthy
+      discovery-server:
+        condition: service_started
+      config-server:
+        condition: service_started
+      gateway:
+        condition: service_started
     environment:
       <<: *gateway_clients_env
       SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/mybank
+      SPRING_DATASOURCE_USERNAME: mybank
+      SPRING_DATASOURCE_PASSWORD: mybank
     ports:
       - "8091:8091"
 
