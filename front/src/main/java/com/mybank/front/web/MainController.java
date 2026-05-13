@@ -48,7 +48,7 @@ public class MainController {
             model.addAttribute("account", profile);
             model.addAttribute("hasAccount", true);
         } catch (Exception ex) {
-            log.warn("Failed to load account profile via Gateway: {}", ex.toString());
+            log.warn("Failed to load account profile via Gateway", ex);
             model.addAttribute("hasAccount", false);
             model.addAttribute("errorMessage", "Accounts service is unavailable now.");
         }

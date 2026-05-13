@@ -23,6 +23,7 @@ public class FrontSecurityConfiguration {
         }
 
         http.oauth2Login(Customizer.withDefaults());
+        http.oauth2Client(Customizer.withDefaults());
         http.logout(logout -> logout.logoutSuccessUrl("/"));
         http.authorizeHttpRequests(auth -> auth
                 .requestMatchers("/actuator/**").permitAll()

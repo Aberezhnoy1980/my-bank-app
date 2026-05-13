@@ -21,7 +21,22 @@
       "publicClient": false,
       "standardFlowEnabled": true,
       "directAccessGrantsEnabled": true,
-      "serviceAccountsEnabled": false
+      "serviceAccountsEnabled": false,
+      "fullScopeAllowed": true,
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "roles",
+        "profile",
+        "email",
+        "basic"
+      ],
+      "optionalClientScopes": [
+        "address",
+        "phone",
+        "offline_access",
+        "microprofile-jwt"
+      ]
     },
     {
       "clientId": "mybank-services",
@@ -47,6 +62,7 @@
       "lastName": "User",
       "emailVerified": true,
       "requiredActions": [],
+      "realmRoles": ["default-roles-mybank", "offline_access"],
       "credentials": [
         {
           "type": "password",
@@ -63,6 +79,7 @@
       "lastName": "User",
       "emailVerified": true,
       "requiredActions": [],
+      "realmRoles": ["default-roles-mybank", "offline_access"],
       "credentials": [
         {
           "type": "password",

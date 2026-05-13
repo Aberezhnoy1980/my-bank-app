@@ -45,6 +45,42 @@
 - команды **`curl`** с переменной **`TOKEN`** повторять после истечения срока;  
 - в браузере обновление обычно выполняет **OAuth2AuthorizedClientManager** (refresh), при корректной конфигурации клиента и сессии — см. раздел 9.
 
+### 2.4. Scope `offline_access`, refresh и ошибка `[not_allowed] Offline tokens not allowed`
+
+**Зачем в приложении.** В конфигурации Front для профиля **`secure`** в запрос к Keycloak включён scope **`offline_access`** (вместе с **`openid`**, **`profile`**). Это стандартный OIDC-scope: IdP может выдать **refresh token**, чтобы обновлять **access token** без повторного ввода логина/пароля, пока живут политики сессии. Это не «режим без сети» и не ослабление шифрования — это согласование **жизненного цикла токенов** между Spring OAuth2 и Keycloak.
+
+**Если в логах Front:** `ClientAuthorizationRequiredException` / долго не обновляется сессия — часто не хватает согласованности Keycloak с этим scope (см. ниже).
+
+**Ошибка Keycloak:** `[not_allowed] Offline tokens not allowed for the user or client` после ввода логина.
+
+1. **Клиент `mybank-front`.** Нужно, чтобы scope **`offline_access`** был **назначен клиенту** (в админке: **Clients** → **`mybank-front`** → вкладка **Client scopes** — блоки *Default* / *Optional*).  
+   Не путать с разделом realm **Client scopes** (справочник всех scope’ов): там scope уже есть в таблице, но это **не** назначение клиенту.  
+   Если у клиента на вкладке **Client scopes** кнопка **Add client scope** показывает *«There are no client scopes left to add»*, значит все доступные scope’ы realm уже привязаны к **`mybank-front`** — в том числе **`offline_access`**; добавлять нечего, проблема не в «пустом списке».
+
+2. **Пользователь.** Часто нужно выдать пользователю realm-роль **`offline_access`**: **Users** → например **`demo.user`** → **Role mapping** → **Assign role** → **`offline_access`**. То же при необходимости для **`alice.user`**. Иначе Keycloak может отказать в offline refresh при запросе этого scope.
+
+3. **Импорт realm.** В репозитории в **`docker/keycloak/mybank-realm.json`** у клиента **`mybank-front`** заданы **`defaultClientScopes`** / **`optionalClientScopes`** (вместе с **`offline_access`**); на **уже существующий** volume Keycloak полный JSON может не перезаписать клиента — тогда правки делаются в админке один раз или поднимается чистый volume при необходимости. Не задавайте в JSON только **`optionalClientScopes`: [`offline_access`]**: при импорте так можно «перебить» стандартный набор и получить **`[invalid_scope] Invalid scopes: openid profile offline_access`** в Docker — клиент перестаёт быть согласован с встроенными scope’ами realm.
+
+**Ошибка `[invalid_scope] Invalid scopes: openid profile offline_access`** (часто полный Docker Compose): конфигурация клиента в Keycloak не содержит нужных **Default / Optional** scope’ов после импорта или устаревшего volume. Исправление: обновить **`mybank-realm.json`** (актуальный файл в репозитории), затем либо пересоздать volume Keycloak и поднять заново, либо в админке у **`mybank-front`** на вкладке **Client scopes** вручную привести списки к стандартным (как у нового OIDC-клиента) и добавить **`offline_access`** в Optional.
+
+**После изменений в Keycloak:** выйти из приложения, при необходимости очистить cookies для **`localhost:8080`** / **`localhost:8090`**, войти снова (или проверить сценарий после истечения access token — раздел 9).
+
+### 2.5. Front в Docker: стабильный OIDC без «двух issuer» (`[invalid_id_token]`, «Invalid token issuer»)
+
+В Compose у Keycloak заданы **`KC_HOSTNAME=http://localhost:8090`** и **`KC_HOSTNAME_BACKCHANNEL_DYNAMIC=true`** (см. **`docker-compose.yml`**), поэтому в **access / ID token** поле **`iss`** остаётся **`http://localhost:8090/realms/mybank`**, а запросы **refresh_token** на token endpoint по **внутреннему** URL (**`http://keycloak:8080/...`**) не требуют совпадения **`iss`** с hostname из URL (иначе Keycloak ≥23 возвращает **`[invalid_grant] Invalid token issuer`**).
+
+При этом HTTP к Keycloak из контейнера **Front** для **token / jwk** в полном Docker идёт на **`http://keycloak:8080/...`** (сеть Compose). Если включить **`spring.security.oauth2.client.provider.keycloak.issuer-uri`** с URL **`http://keycloak:8080/realms/mybank`**, Spring выполняет **OIDC discovery** по этому адресу: в ответе часто оказывается **`issuer`** с хостом **`keycloak:8080`**, а не **`localhost:8090`**. Тогда проверка **id_token** не совпадает с **`iss`** в JWT → **`[invalid_id_token]`** и похожие ошибки при логине.
+
+**Стабильная схема в репозитории:** для модуля **Front** при профиле **`secure`** регистрация OAuth2 собирается в коде — **`FrontKeycloakClientRegistrationConfiguration`**:
+
+- ожидаемый OIDC issuer (**`issuerUri`**) задаётся переменной **`KEYCLOAK_OIDC_ISSUER_URI`** (по умолчанию **`http://localhost:8090/realms/mybank`**) — **только** для согласования с claim **`iss`**, без HTTP discovery по этому URL из контейнера;
+- **`KEYCLOAK_TOKEN_URI`** и **`KEYCLOAK_JWK_SET_URI`** — **`http://keycloak:8080/...`** в Docker (после включения **`KC_HOSTNAME_BACKCHANNEL_DYNAMIC`** на Keycloak);
+- **`KEYCLOAK_AUTHORIZATION_URI`** — URL для браузера (**`http://localhost:8090/...`**).
+
+В **`application-local.yml` / `config-server/.../front.yml`** у провайдера **Keycloak для Front** поле **`issuer-uri` не задаётся** (чтобы Boot не подмешивал discovery поверх ручной регистрации). Класс **`OAuth2ClientRegistrationRepositoryConfiguration`** подключается через **`@Import`** внутри **`OAuth2ClientAutoConfiguration`**, поэтому **`spring.autoconfigure.exclude`** на него **не действует**. В модуле **Front** в **`FrontApplication`** задано **`@SpringBootApplication(exclude = OAuth2ClientAutoConfiguration.class)`**; сервис и репозиторий авторизованного клиента для **`secure`** — в **`FrontOAuth2LoginSupportConfiguration`**, регистрация клиента — в **`FrontKeycloakClientRegistrationConfiguration`**.
+
+**На хосте (IDE / `mvn`)** значения по умолчанию совпадают: и issuer, и token/jwk — **`localhost:8090`**.
+
 ---
 
 ## 3. Multi-module Maven: зависимость модулей от `security-support`
@@ -237,6 +273,13 @@ URL с **`/realms/master/`** и **`security-admin-console`** относятся 
 | **`curl` 200, в браузере «Accounts unavailable»** | Bearer не доходил до Gateway из-за конфигурации **`RestClient`** + LoadBalancer; проверить **`secure`** на Front и сессию после рестарта (раздел 8). |
 | Редирект на **`master`** / админку Keycloak | Открыт неверный URL (раздел 8.1). |
 | После **`mvn install`** артефакт не находится | Запуск из корня; использовать **`-pl … -am`**. |
+| **`[not_allowed] Offline tokens not allowed`**, логин через браузер падает | Scope **`offline_access`** в запросе Front; проверить клиент **`mybank-front`** (вкладка **Client scopes**) и роль **`offline_access`** у пользователя — раздел **2.4**. |
+| **`ClientAuthorizationRequiredException`** после простоя в UI | Истёк access token и не удался refresh; после настройки **`offline_access`** см. раздел **9**; полная перезагрузка сессии — выход и очистка cookies. |
+| **`[invalid_grant] Invalid token issuer`** при refresh (несовпадение **`iss`** и hostname token endpoint) | В **`docker-compose.yml`** у Keycloak: **`KC_HOSTNAME=http://localhost:8090`**, **`KC_HOSTNAME_BACKCHANNEL_DYNAMIC=true`**; **Front** — **`KEYCLOAK_TOKEN_URI`** на **`http://keycloak:8080/...`** — §2.5. |
+| **`[invalid_scope] Invalid scopes: openid profile offline_access`** | Клиент **`mybank-front`** в Keycloak без полного набора Default/Optional scope’ов (часто после минимального импорта или старого volume). См. раздел **2.4**, **`docker/keycloak/mybank-realm.json`**, при необходимости пересоздать volume Keycloak. |
+| **`Unable to resolve Configuration with the provided Issuer`** `http://localhost:8090/realms/mybank` при старте **Front** в Docker | Boot тянет **`OAuth2ClientRegistrationRepositoryConfiguration`** через **`@Import`** в **`OAuth2ClientAutoConfiguration`**; исключение только репозитория из YAML не помогает. См. §2.5 — **`FrontApplication`**: **`exclude = OAuth2ClientAutoConfiguration`**, ручная регистрация + **`FrontOAuth2LoginSupportConfiguration`**. |
+| Старт **accounts / cash / transfer / notifications**: *The Issuer … did not match the requested issuer* (**localhost** vs **keycloak**) | У **`oauth2.client.provider.keycloak`** не использовать **`issuer-uri`** вместе с другим «желаемым» issuer в Compose; задать **`token-uri`** и **`jwk-set-uri`** (**`KEYCLOAK_TOKEN_URI`**, **`KEYCLOAK_JWK_SET_URI`** в **`docker-compose.secure.yml`**). **Resource Server** по-прежнему **`jwt.issuer-uri`** = публичный realm. |
+| **`[invalid_id_token]`**, «invalid claims», **`iss=http://localhost:8090/realms/mybank`** | Discovery по **`keycloak:8080`** дал другой **`issuer`**, чем **`iss`** в JWT. См. раздел **2.5** — ручная регистрация Front, **`KEYCLOAK_OIDC_ISSUER_URI`**, без **`issuer-uri`** в YAML провайдера. |
 
 ---
 
@@ -247,6 +290,10 @@ URL с **`/realms/master/`** и **`security-admin-console`** относятся 
 | `docker-compose.yml` | Keycloak, Eureka, Config Server, Gateway, сервисы, переменные для Docker. |
 | `docker/keycloak/mybank-realm.json` | Realm, клиенты, пользователи для импорта. |
 | `front/.../FrontGatewayRestClientConfiguration.java` | Явный **`RestClient`** для вызовов Gateway с Bearer. |
+| `front/.../FrontApplication.java` | **`exclude = OAuth2ClientAutoConfiguration`**: отключение Boot OAuth2 client auto-config с неработающим **`@Import`** репозитория. |
+| `front/.../FrontKeycloakClientRegistrationConfiguration.java` | Ручная **`ClientRegistration`** (issuer JWT vs token/jwk URL в Docker). |
+| `front/.../FrontOAuth2LoginSupportConfiguration.java` | **`OAuth2AuthorizedClientService`** / **`OAuth2AuthorizedClientRepository`** вместо отключённого **`OAuth2WebSecurityConfiguration`**. |
+| `front/.../FrontOAuth2AuthorizedClientConfiguration.java` | **`OAuth2AuthorizedClientManager`** с refresh и clock skew. |
 | `front/.../OAuth2LoginAccessTokenInterceptor.java` | Подстановка access token из OAuth2-сессии. |
 | `README.md` | Порты, запуск, ссылка на этот документ. |
 

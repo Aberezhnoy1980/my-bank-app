@@ -32,15 +32,15 @@ spring:
             provider: keycloak
             client-id: mybank-front
             client-secret: ${KEYCLOAK_FRONT_SECRET:front-secret-change-me}
-            scope: openid,profile
+            scope: openid,profile,offline_access
             authorization-grant-type: authorization_code
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
         provider:
           keycloak:
-            # Без issuer-uri: иначе discovery по внутреннему URL в Docker отдаёт authorization → http://keycloak:8080 (браузер не откроет).
+            # issuer-uri не используем: discovery по keycloak:8080 даёт issuer ≠ iss в JWT. Регистрация — FrontKeycloakClientRegistrationConfiguration (KEYCLOAK_OIDC_ISSUER_URI + token/jwk; на Keycloak — KC_HOSTNAME + KC_HOSTNAME_BACKCHANNEL_DYNAMIC).
             authorization-uri: ${KEYCLOAK_AUTHORIZATION_URI:http://localhost:8090/realms/mybank/protocol/openid-connect/auth}
             token-uri: ${KEYCLOAK_TOKEN_URI:http://localhost:8090/realms/mybank/protocol/openid-connect/token}
-            # user-info-uri не задаём: при KC_HOSTNAME_URL=localhost:8090 вызов UserInfo на keycloak:8080 даёт 401;
+            # user-info-uri не задаём: при публичном hostname localhost вызов UserInfo на keycloak:8080 даёт 401;
             # для OIDC достаточно claims в ID token (openid profile).
             jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://localhost:8090/realms/mybank/protocol/openid-connect/certs}
             user-name-attribute: preferred_username

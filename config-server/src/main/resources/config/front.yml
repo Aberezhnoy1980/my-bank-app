@@ -21,7 +21,7 @@ spring:
             provider: keycloak
             client-id: mybank-front
             client-secret: ${KEYCLOAK_FRONT_SECRET:front-secret-change-me}
-            scope: openid,profile
+            scope: openid,profile,offline_access
             authorization-grant-type: authorization_code
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
         provider:

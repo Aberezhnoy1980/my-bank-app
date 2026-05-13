@@ -42,7 +42,9 @@ spring:
             scope: openid
         provider:
           keycloak:
-            issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8090/realms/mybank}
+            # Без issuer-uri: discovery даёт iss из KC_HOSTNAME (localhost), запрос с issuer=keycloak:8080 ломает Spring.
+            token-uri: ${KEYCLOAK_TOKEN_URI:http://localhost:8090/realms/mybank/protocol/openid-connect/token}
+            jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://localhost:8090/realms/mybank/protocol/openid-connect/certs}
 app:
   security:
     enabled: true

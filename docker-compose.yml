@@ -32,8 +32,10 @@ services:
     environment:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
-      # Один и тот же iss в JWT для запросов с хоста (localhost:8090) и из Docker-сети (keycloak:8080).
-      KC_HOSTNAME_URL: http://localhost:8090
+      # iss в JWT — http://localhost:8090/realms/... . BACKCHANNEL_DYNAMIC: refresh с token endpoint по keycloak:8080
+      # не требует совпадения iss с внутренним hostname (Keycloak ≥23).
+      KC_HOSTNAME: http://localhost:8090
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
     volumes:
       - ./docker/keycloak:/opt/keycloak/data/import
     ports:

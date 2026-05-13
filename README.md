@@ -1,12 +1,22 @@
 # my-bank-app
 
 ![Java](https://img.shields.io/badge/Java-21-orange)
-![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.x-6DB33F)
-![Spring Cloud](https://img.shields.io/badge/Spring%20Cloud-202x-0A2540)
+![Maven](https://img.shields.io/badge/Maven-3.x-C71A36)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.3-6DB33F)
+![Spring Cloud](https://img.shields.io/badge/Spring%20Cloud-2023.0-0A2540)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791)
+![Liquibase](https://img.shields.io/badge/Liquibase-migrations-2962FF)
 ![OAuth2](https://img.shields.io/badge/OAuth2-JWT-4B32C3)
+![Keycloak](https://img.shields.io/badge/Keycloak-OIDC-5865F2)
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED)
 [![CI](https://github.com/Aberezhnoy1980/my-bank-app/actions/workflows/ci.yml/badge.svg)](https://github.com/Aberezhnoy1980/my-bank-app/actions/workflows/ci.yml)
+
+![Eureka](https://img.shields.io/badge/Eureka-Service%20Discovery-6DB33F)
+![Spring Cloud Config](https://img.shields.io/badge/Spring%20Cloud%20Config-externalized-6DB33F)
+![Spring Cloud Gateway](https://img.shields.io/badge/Spring%20Cloud%20Gateway-API-6DB33F)
+![Spring Cloud Contract](https://img.shields.io/badge/Spring%20Cloud%20Contract-4.1-0A2540)
+![Thymeleaf](https://img.shields.io/badge/Thymeleaf-templates-005F0F)
+![JUnit 5](https://img.shields.io/badge/JUnit-5-25A162)
 
 Учебный микросервисный проект банка (**module 3 / sprint 9**, Yandex Practicum).
 
@@ -118,7 +128,7 @@ UI: `http://localhost:8080`. HTTP-клиенты приложений обращ
 Включение защиты по JWT от Keycloak:
 
 1. Поднять Keycloak (сервис в `docker-compose.yml`, импорт realm из `docker/keycloak/mybank-realm.json`). Админ-консоль: `http://localhost:8090` (учётные данные администратора — переменные окружения в Compose).  
-2. Запустить сервисы с профилем **`secure`**. На хосте без Docker часто достаточно **`KEYCLOAK_ISSUER_URI=http://localhost:8090/realms/mybank`**; для полного стека в Docker см. **`docker-compose.secure.yml`** и переменные **`SPRING_SECURITY_OAUTH2_*`** там (issuer/JWKS/client provider разведены по назначению).
+2. Запустить сервисы с профилем **`secure`**. На хосте без Docker: **`KEYCLOAK_ISSUER_URI=http://localhost:8090/realms/mybank`** для Gateway и микросервисов. Полный Compose: Keycloak с **`KC_HOSTNAME`** + **`KC_HOSTNAME_BACKCHANNEL_DYNAMIC`** (см. **`docker-compose.yml`**); **Front** — **`KEYCLOAK_OIDC_ISSUER_URI`**, **`KEYCLOAK_TOKEN_URI`**, **`KEYCLOAK_JWK_SET_URI`** (см. **`docs/SMOKE_CHECK_SECURE.md`** §2.5); остальные **`SPRING_SECURITY_OAUTH2_*`** — как в **`docker-compose.secure.yml`**.
 
 Клиенты из импортируемого realm (секреты для неучебных сред заменить):
 
@@ -131,7 +141,7 @@ UI: `http://localhost:8080`. HTTP-клиенты приложений обращ
 
 Поток: пользователь входит через Front → Gateway проверяет JWT → downstream получает тот же Bearer при проксировании; **`preferred_username`** сопоставляется с username аккаунта. При активном **`secure`** примеры **`curl`** ниже требуют заголовок `Authorization: Bearer <access_token>` (токен получить через UI или endpoint token Keycloak).
 
-Детальный пошаговый сценарий проверки контура **`secure`** (переменные окружения, получение токена, типичные ошибки Keycloak/Gateway/Front, контуры «Docker + хост» и «полный Compose»): **[docs/SMOKE_CHECK_SECURE.md](docs/SMOKE_CHECK_SECURE.md)**.
+Детальный пошаговый сценарий проверки контура **`secure`** (переменные окружения, получение токена, типичные ошибки Keycloak/Gateway/Front, контуры «Docker + хост» и «полный Compose», scope **`offline_access`** и настройка Keycloak): **[docs/SMOKE_CHECK_SECURE.md](docs/SMOKE_CHECK_SECURE.md)**.
 
 ## Быстрая проверка API через Gateway (порт 8081)
 
