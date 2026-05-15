@@ -2,6 +2,8 @@ package com.mybank.transfer.client;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mybank.transfer.service.TransferOperationException;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 import java.math.BigDecimal;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -23,6 +25,8 @@ public class AccountsClient {
         this.objectMapper = objectMapper;
     }
 
+    @CircuitBreaker(name = "accounts", fallbackMethod = "getByUsernameFallback")
+    @Retry(name = "accounts")
     public AccountProfileView getByUsername(String username) {
         try {
             return restClient.get()
@@ -34,12 +38,31 @@ public class AccountsClient {
         }
     }
 
+    @CircuitBreaker(name = "accounts", fallbackMethod = "withdrawFallback")
+    @Retry(name = "accounts")
     public AccountProfileView withdraw(String username, BigDecimal amount) {
         return updateBalance(username, BalanceOperationType.WITHDRAW, amount);
     }
 
+    @CircuitBreaker(name = "accounts", fallbackMethod = "depositFallback")
+    @Retry(name = "accounts")
     public AccountProfileView deposit(String username, BigDecimal amount) {
         return updateBalance(username, BalanceOperationType.DEPOSIT, amount);
+    }
+
+    @SuppressWarnings("unused")
+    private AccountProfileView getByUsernameFallback(String username, Throwable cause) {
+        throw unavailable(cause);
+    }
+
+    @SuppressWarnings("unused")
+    private AccountProfileView withdrawFallback(String username, BigDecimal amount, Throwable cause) {
+        throw unavailable(cause);
+    }
+
+    @SuppressWarnings("unused")
+    private AccountProfileView depositFallback(String username, BigDecimal amount, Throwable cause) {
+        throw unavailable(cause);
     }
 
     private AccountProfileView updateBalance(String username, BalanceOperationType operationType, BigDecimal amount) {
@@ -52,6 +75,13 @@ public class AccountsClient {
         } catch (RestClientResponseException ex) {
             throw new TransferOperationException(extractErrorMessage(ex));
         }
+    }
+
+    private TransferOperationException unavailable(Throwable cause) {
+        if (cause instanceof TransferOperationException transferOperationException) {
+            return transferOperationException;
+        }
+        return new TransferOperationException("Accounts service unavailable");
     }
 
     private String extractErrorMessage(RestClientResponseException ex) {

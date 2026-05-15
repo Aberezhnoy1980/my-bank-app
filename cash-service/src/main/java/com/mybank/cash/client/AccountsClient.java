@@ -2,6 +2,8 @@ package com.mybank.cash.client;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mybank.cash.service.CashOperationException;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 import java.math.BigDecimal;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,12 +26,26 @@ public class AccountsClient {
         this.objectMapper = objectMapper;
     }
 
+    @CircuitBreaker(name = "accounts", fallbackMethod = "depositFallback")
+    @Retry(name = "accounts")
     public AccountProfileView deposit(BigDecimal amount) {
         return updateBalance(BalanceOperationType.DEPOSIT, amount);
     }
 
+    @CircuitBreaker(name = "accounts", fallbackMethod = "withdrawFallback")
+    @Retry(name = "accounts")
     public AccountProfileView withdraw(BigDecimal amount) {
         return updateBalance(BalanceOperationType.WITHDRAW, amount);
+    }
+
+    @SuppressWarnings("unused")
+    private AccountProfileView depositFallback(BigDecimal amount, Throwable cause) {
+        throw unavailable(cause);
+    }
+
+    @SuppressWarnings("unused")
+    private AccountProfileView withdrawFallback(BigDecimal amount, Throwable cause) {
+        throw unavailable(cause);
     }
 
     private AccountProfileView updateBalance(BalanceOperationType operationType, BigDecimal amount) {
@@ -42,6 +58,13 @@ public class AccountsClient {
         } catch (RestClientResponseException ex) {
             throw new CashOperationException(extractErrorMessage(ex));
         }
+    }
+
+    private CashOperationException unavailable(Throwable cause) {
+        if (cause instanceof CashOperationException cashOperationException) {
+            return cashOperationException;
+        }
+        return new CashOperationException("Accounts service unavailable");
     }
 
     private String extractErrorMessage(RestClientResponseException ex) {
