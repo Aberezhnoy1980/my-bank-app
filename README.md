@@ -39,6 +39,7 @@
 - **Данные:** PostgreSQL, одна БД `mybank`, изоляция по **schema per service** для модулей с персистентностью: `accounts`, `notifications`, `cash`, `transfer`; миграции **Liquibase**  
 - **Безопасность:** OAuth2 (Authorization Code для браузера, Client Credentials между сервисами), Keycloak в профиле `secure`  
 - **Контракты:** Spring Cloud Contract — producer `accounts-service`, consumers `cash-service` и `transfer-service` (проверка против stubs)  
+- **Отказоустойчивость:** Resilience4j Circuit Breaker + Retry на вызовах **Accounts** из **cash-service** / **transfer-service**  
 - **Контейнеризация:** Docker, Docker Compose  
 - **Externalized Config:** Spring Cloud Config Server; канонические YAML для приложений лежат в **`config-server/src/main/resources/config/`** — общий **`application.yml`** (Eureka, Actuator) и файлы **`{spring.application.name}.yml`**. В каждом модуле **`application-local.yml`** задаёт те же значения для автономного старта без Config Server; при доступном сервере конфигурации последний импорт в **`application.yml`** подмешивает определения поверх локальных. В Docker Compose для клиентов задаётся **`CONFIG_SERVER_HOST=config-server`** (хост Config Server вместо `localhost`).
 
@@ -108,7 +109,7 @@ make down
 make down-secure
 ```
 
-**Полный стек в Docker с JWT** (`SPRING_PROFILES_ACTIVE=secure`): поверх **`docker-compose.yml`** подключается **`docker-compose.secure.yml`** — задаются переменные Spring Security (issuer/JWKS и OAuth2-клиенты для доступа к Keycloak из контейнерной сети), **healthcheck** Keycloak и **`depends_on: service_healthy`**, чтобы сервисы не стартовали до готовности OIDC. Для Front явно заданы OAuth2 URI: редирект браузера на Keycloak по **`localhost:8090`**, обмен кода на токен и JWKS — по сервисному имени **`keycloak:8080`**. Быстрая проверка API с токеном: **`make smoke-c`**. Пошаговые инструкции (в том числе вариант «инфраструктура в Docker, JVM на хосте» и «всё в Docker»), получение токена и типичные ошибки — **[docs/SMOKE_CHECK_SECURE.md](docs/SMOKE_CHECK_SECURE.md)**.
+**Полный стек в Docker с JWT** (`SPRING_PROFILES_ACTIVE=secure`): поверх **`docker-compose.yml`** подключается **`docker-compose.secure.yml`** — переменные Spring Security, **healthcheck** Keycloak, **`depends_on: service_healthy`**. Быстрая проверка API: **`make smoke-c`**. Переменные для профиля **`secure`**: **[`.env.example`](.env.example)**; чек-лист контуров A/B — **[docs/SMOKE_CHECK_SECURE.md](docs/SMOKE_CHECK_SECURE.md)**.
 
 ## Маршруты Gateway
 
@@ -128,7 +129,7 @@ UI: `http://localhost:8080`. HTTP-клиенты приложений обращ
 Включение защиты по JWT от Keycloak:
 
 1. Поднять Keycloak (сервис в `docker-compose.yml`, импорт realm из `docker/keycloak/mybank-realm.json`). Админ-консоль: `http://localhost:8090` (учётные данные администратора — переменные окружения в Compose).  
-2. Запустить сервисы с профилем **`secure`**. На хосте без Docker: **`KEYCLOAK_ISSUER_URI=http://localhost:8090/realms/mybank`** для Gateway и микросервисов. Полный Compose: Keycloak с **`KC_HOSTNAME`** + **`KC_HOSTNAME_BACKCHANNEL_DYNAMIC`** (см. **`docker-compose.yml`**); **Front** — **`KEYCLOAK_OIDC_ISSUER_URI`**, **`KEYCLOAK_TOKEN_URI`**, **`KEYCLOAK_JWK_SET_URI`** (см. **`docs/SMOKE_CHECK_SECURE.md`** §2.5); остальные **`SPRING_SECURITY_OAUTH2_*`** — как в **`docker-compose.secure.yml`**.
+2. Запустить сервисы с профилем **`secure`**. Скопировать **[`.env.example`](.env.example)** → `.env`, экспортировать нужные переменные (или `docker compose --env-file .env`). Полный Compose: **`KC_HOSTNAME`** + **`KC_HOSTNAME_BACKCHANNEL_DYNAMIC`** в **`docker-compose.yml`**; остальное — **`docker-compose.secure.yml`**.
 
 Клиенты из импортируемого realm (секреты для неучебных сред заменить):
 
@@ -141,7 +142,7 @@ UI: `http://localhost:8080`. HTTP-клиенты приложений обращ
 
 Поток: пользователь входит через Front → Gateway проверяет JWT → downstream получает тот же Bearer при проксировании; **`preferred_username`** сопоставляется с username аккаунта. При активном **`secure`** примеры **`curl`** ниже требуют заголовок `Authorization: Bearer <access_token>` (токен получить через UI или endpoint token Keycloak).
 
-Детальный пошаговый сценарий проверки контура **`secure`** (переменные окружения, получение токена, типичные ошибки Keycloak/Gateway/Front, контуры «Docker + хост» и «полный Compose», scope **`offline_access`** и настройка Keycloak): **[docs/SMOKE_CHECK_SECURE.md](docs/SMOKE_CHECK_SECURE.md)**.
+Проверка контура **`secure`**: **[docs/SMOKE_CHECK_SECURE.md](docs/SMOKE_CHECK_SECURE.md)** (краткий чек-лист).
 
 ## Быстрая проверка API через Gateway (порт 8081)
 
