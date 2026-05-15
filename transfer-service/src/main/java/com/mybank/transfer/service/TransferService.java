@@ -7,11 +7,9 @@ import com.mybank.transfer.client.AccountsClient;
 import com.mybank.transfer.client.NotificationsClient;
 import com.mybank.transfer.persistence.TransferRecordEntity;
 import com.mybank.transfer.persistence.TransferRecordRepository;
+import com.mybank.security.support.JwtUsernameResolver;
 import java.util.Objects;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -20,22 +18,25 @@ public class TransferService {
     private final AccountsClient accountsClient;
     private final NotificationsClient notificationsClient;
     private final TransferRecordRepository transferRecordRepository;
+    private final JwtUsernameResolver jwtUsernameResolver;
     private final String senderUsername;
 
     public TransferService(
             AccountsClient accountsClient,
             NotificationsClient notificationsClient,
             TransferRecordRepository transferRecordRepository,
+            JwtUsernameResolver jwtUsernameResolver,
             @Value("${app.transfer.sender-username}") String senderUsername
     ) {
         this.accountsClient = accountsClient;
         this.notificationsClient = notificationsClient;
         this.transferRecordRepository = transferRecordRepository;
+        this.jwtUsernameResolver = jwtUsernameResolver;
         this.senderUsername = senderUsername;
     }
 
     public TransferResponse transfer(TransferRequest request) {
-        String sender = resolveSenderUsername();
+        String sender = jwtUsernameResolver.resolve(senderUsername);
         validateParticipants(sender, request.recipientUsername());
 
         // Validate recipient existence before balance changes.
@@ -53,7 +54,7 @@ public class TransferService {
                     senderAfterWithdraw.balance(),
                     recipientAfterDeposit.balance()
             );
-            
+
         } catch (RuntimeException ex) {
             // Best-effort compensation for partial failure.
             accountsClient.deposit(sender, request.amount());
@@ -64,21 +65,6 @@ public class TransferService {
                     "Transfer attempt from " + sender + " to " + request.recipientUsername()
             );
         }
-    }
-
-    private String resolveSenderUsername() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth instanceof JwtAuthenticationToken jwt) {
-            String preferred = jwt.getToken().getClaimAsString("preferred_username");
-            if (preferred != null && !preferred.isBlank()) {
-                return preferred;
-            }
-            String sub = jwt.getToken().getSubject();
-            if (sub != null && !sub.isBlank()) {
-                return sub;
-            }
-        }
-        return senderUsername;
     }
 
     private void validateParticipants(String sender, String recipientUsername) {

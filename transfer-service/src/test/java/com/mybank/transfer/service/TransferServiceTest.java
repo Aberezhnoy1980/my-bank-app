@@ -14,6 +14,7 @@ import com.mybank.transfer.client.AccountsClient;
 import com.mybank.transfer.client.NotificationsClient;
 import com.mybank.transfer.persistence.TransferRecordEntity;
 import com.mybank.transfer.persistence.TransferRecordRepository;
+import com.mybank.security.support.JwtUsernameResolver;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,6 +27,7 @@ class TransferServiceTest {
     private AccountsClient accountsClient;
     private NotificationsClient notificationsClient;
     private TransferRecordRepository transferRecordRepository;
+    private JwtUsernameResolver jwtUsernameResolver;
     private TransferService transferService;
 
     @BeforeEach
@@ -33,7 +35,15 @@ class TransferServiceTest {
         accountsClient = Mockito.mock(AccountsClient.class);
         notificationsClient = Mockito.mock(NotificationsClient.class);
         transferRecordRepository = Mockito.mock(TransferRecordRepository.class);
-        transferService = new TransferService(accountsClient, notificationsClient, transferRecordRepository, "demo.user");
+        jwtUsernameResolver = Mockito.mock(JwtUsernameResolver.class);
+        when(jwtUsernameResolver.resolve("demo.user")).thenReturn("demo.user");
+        transferService = new TransferService(
+                accountsClient,
+                notificationsClient,
+                transferRecordRepository,
+                jwtUsernameResolver,
+                "demo.user"
+        );
     }
 
     @Test

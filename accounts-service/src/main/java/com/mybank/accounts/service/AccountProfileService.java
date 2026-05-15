@@ -4,10 +4,8 @@ import com.mybank.accounts.api.UpdateAccountProfileRequest;
 import com.mybank.accounts.domain.AccountProfile;
 import com.mybank.accounts.persistence.AccountEntity;
 import com.mybank.accounts.persistence.AccountRepository;
+import com.mybank.security.support.JwtUsernameResolver;
 import java.math.BigDecimal;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,9 +15,11 @@ public class AccountProfileService {
     private static final String FALLBACK_USERNAME = "demo.user";
 
     private final AccountRepository accountRepository;
+    private final JwtUsernameResolver jwtUsernameResolver;
 
-    public AccountProfileService(AccountRepository accountRepository) {
+    public AccountProfileService(AccountRepository accountRepository, JwtUsernameResolver jwtUsernameResolver) {
         this.accountRepository = accountRepository;
+        this.jwtUsernameResolver = jwtUsernameResolver;
     }
 
     @Transactional(readOnly = true)
@@ -43,18 +43,7 @@ public class AccountProfileService {
     }
 
     private String resolveCurrentUsername() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth instanceof JwtAuthenticationToken jwt) {
-            String preferred = jwt.getToken().getClaimAsString("preferred_username");
-            if (preferred != null && !preferred.isBlank()) {
-                return preferred;
-            }
-            String sub = jwt.getToken().getSubject();
-            if (sub != null && !sub.isBlank()) {
-                return sub;
-            }
-        }
-        return FALLBACK_USERNAME;
+        return jwtUsernameResolver.resolve(FALLBACK_USERNAME);
     }
 
     @Transactional(readOnly = true)

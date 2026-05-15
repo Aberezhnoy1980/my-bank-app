@@ -7,11 +7,9 @@ import com.mybank.cash.client.NotificationsClient;
 import com.mybank.cash.persistence.CashOperationEntity;
 import com.mybank.cash.persistence.CashOperationRepository;
 import com.mybank.cash.persistence.CashOperationType;
+import com.mybank.security.support.JwtUsernameResolver;
 import java.math.BigDecimal;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -20,22 +18,25 @@ public class CashService {
     private final AccountsClient accountsClient;
     private final NotificationsClient notificationsClient;
     private final CashOperationRepository cashOperationRepository;
+    private final JwtUsernameResolver jwtUsernameResolver;
     private final String fallbackUsername;
 
     public CashService(
             AccountsClient accountsClient,
             NotificationsClient notificationsClient,
             CashOperationRepository cashOperationRepository,
+            JwtUsernameResolver jwtUsernameResolver,
             @Value("${app.cash.fallback-username}") String fallbackUsername
     ) {
         this.accountsClient = accountsClient;
         this.notificationsClient = notificationsClient;
         this.cashOperationRepository = cashOperationRepository;
+        this.jwtUsernameResolver = jwtUsernameResolver;
         this.fallbackUsername = fallbackUsername;
     }
 
     public CashOperationResponse deposit(BigDecimal amount) {
-        String username = resolveUsername();
+        String username = jwtUsernameResolver.resolve(fallbackUsername);
         AccountProfileView profile = accountsClient.deposit(amount);
         cashOperationRepository.save(new CashOperationEntity(username, CashOperationType.DEPOSIT, amount));
         notificationsClient.send("CASH_DEPOSIT", "Deposit completed for " + username + " amount " + amount);
@@ -43,25 +44,10 @@ public class CashService {
     }
 
     public CashOperationResponse withdraw(BigDecimal amount) {
-        String username = resolveUsername();
+        String username = jwtUsernameResolver.resolve(fallbackUsername);
         AccountProfileView profile = accountsClient.withdraw(amount);
         cashOperationRepository.save(new CashOperationEntity(username, CashOperationType.WITHDRAW, amount));
         notificationsClient.send("CASH_WITHDRAW", "Withdraw completed for " + username + " amount " + amount);
         return new CashOperationResponse("WITHDRAW_SUCCESS", profile.balance());
-    }
-
-    private String resolveUsername() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth instanceof JwtAuthenticationToken jwt) {
-            String preferred = jwt.getToken().getClaimAsString("preferred_username");
-            if (preferred != null && !preferred.isBlank()) {
-                return preferred;
-            }
-            String sub = jwt.getToken().getSubject();
-            if (sub != null && !sub.isBlank()) {
-                return sub;
-            }
-        }
-        return fallbackUsername;
     }
 }
