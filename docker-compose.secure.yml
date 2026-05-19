@@ -1,0 +1,71 @@
+# Профиль secure: JWT iss = http://localhost:8090/realms/mybank (`KC_HOSTNAME` + `KC_HOSTNAME_BACKCHANNEL_DYNAMIC` в docker-compose.yml).
+# Front: token/jwk на keycloak:8080; OIDC issuer — KEYCLOAK_OIDC_ISSUER_URI, см. FrontKeycloakClientRegistrationConfiguration.
+services:
+  gateway:
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: secure
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://localhost:8090/realms/mybank
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://keycloak:8080/realms/mybank/protocol/openid-connect/certs
+
+  front:
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: secure
+      KEYCLOAK_FRONT_SECRET: ${KEYCLOAK_FRONT_SECRET:-front-secret-change-me}
+      KEYCLOAK_OIDC_ISSUER_URI: http://localhost:8090/realms/mybank
+      KEYCLOAK_TOKEN_URI: http://keycloak:8080/realms/mybank/protocol/openid-connect/token
+      KEYCLOAK_JWK_SET_URI: http://keycloak:8080/realms/mybank/protocol/openid-connect/certs
+
+  accounts-service:
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: secure
+      KEYCLOAK_SERVICE_SECRET: ${KEYCLOAK_SERVICE_SECRET:-services-secret-change-me}
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://localhost:8090/realms/mybank
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://keycloak:8080/realms/mybank/protocol/openid-connect/certs
+      # OAuth2 client (client_credentials): без issuer-uri — иначе OIDC discovery даёт iss localhost, Spring ругается на mismatch с keycloak:8080.
+      KEYCLOAK_TOKEN_URI: http://keycloak:8080/realms/mybank/protocol/openid-connect/token
+      KEYCLOAK_JWK_SET_URI: http://keycloak:8080/realms/mybank/protocol/openid-connect/certs
+
+  cash-service:
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: secure
+      KEYCLOAK_SERVICE_SECRET: ${KEYCLOAK_SERVICE_SECRET:-services-secret-change-me}
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://localhost:8090/realms/mybank
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://keycloak:8080/realms/mybank/protocol/openid-connect/certs
+      KEYCLOAK_TOKEN_URI: http://keycloak:8080/realms/mybank/protocol/openid-connect/token
+      KEYCLOAK_JWK_SET_URI: http://keycloak:8080/realms/mybank/protocol/openid-connect/certs
+
+  transfer-service:
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: secure
+      KEYCLOAK_SERVICE_SECRET: ${KEYCLOAK_SERVICE_SECRET:-services-secret-change-me}
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://localhost:8090/realms/mybank
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://keycloak:8080/realms/mybank/protocol/openid-connect/certs
+      KEYCLOAK_TOKEN_URI: http://keycloak:8080/realms/mybank/protocol/openid-connect/token
+      KEYCLOAK_JWK_SET_URI: http://keycloak:8080/realms/mybank/protocol/openid-connect/certs
+
+  notifications-service:
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: secure
+      KEYCLOAK_SERVICE_SECRET: ${KEYCLOAK_SERVICE_SECRET:-services-secret-change-me}
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://localhost:8090/realms/mybank
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://keycloak:8080/realms/mybank/protocol/openid-connect/certs
+      KEYCLOAK_TOKEN_URI: http://keycloak:8080/realms/mybank/protocol/openid-connect/token
+      KEYCLOAK_JWK_SET_URI: http://keycloak:8080/realms/mybank/protocol/openid-connect/certs

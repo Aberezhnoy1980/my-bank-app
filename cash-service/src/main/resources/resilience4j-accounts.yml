@@ -1,0 +1,20 @@
+# Shared Resilience4j settings for AccountsClient (imported from application-local.yml).
+resilience4j:
+  circuitbreaker:
+    instances:
+      accounts:
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        permitted-number-of-calls-in-half-open-state: 3
+        wait-duration-in-open-state: 10s
+        failure-rate-threshold: 50
+  retry:
+    instances:
+      accounts:
+        max-attempts: 3
+        wait-duration: 200ms
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2
+        ignore-exceptions:
+          - com.mybank.cash.service.CashOperationException
+          - org.springframework.web.client.RestClientResponseException

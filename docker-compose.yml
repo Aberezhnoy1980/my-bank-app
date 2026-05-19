@@ -1,0 +1,212 @@
+# Outbound REST from containers must use Compose DNS names, not localhost.
+x-gateway-clients-env: &gateway_clients_env
+  APP_ACCOUNTS_BASE_URL: http://gateway:8081
+  APP_NOTIFICATIONS_BASE_URL: http://gateway:8081
+  APP_GATEWAY_BASE_URL: http://gateway:8081
+
+volumes:
+  postgres_data: {}
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres
+    environment:
+      POSTGRES_DB: mybank
+      POSTGRES_USER: mybank
+      POSTGRES_PASSWORD: mybank
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mybank -d mybank"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0.7
+    container_name: keycloak
+    command: start-dev --import-realm
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      # iss в JWT — http://localhost:8090/realms/... . BACKCHANNEL_DYNAMIC: refresh с token endpoint по keycloak:8080
+      # не требует совпадения iss с внутренним hostname (Keycloak ≥23).
+      KC_HOSTNAME: http://localhost:8090
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
+    volumes:
+      - ./docker/keycloak:/opt/keycloak/data/import
+    ports:
+      - "8090:8080"
+    healthcheck:
+      # Образ без curl: проверяем, что HTTP уже отдаёт OIDC discovery по нужному realm (как при старте Spring).
+      test:
+        [
+          "CMD-SHELL",
+          'exec 3<>/dev/tcp/127.0.0.1/8080 && printf "GET /realms/mybank/.well-known/openid-configuration HTTP/1.0\r\nHost: localhost\r\nConnection: close\r\n\r\n" >&3 && head -1 <&3 | grep -q "HTTP/1.[01] 200"',
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 36
+      start_period: 120s
+
+  discovery-server:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.module
+      args:
+        MODULE: discovery-server
+    container_name: discovery-server
+    ports:
+      - "8761:8761"
+
+  config-server:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.module
+      args:
+        MODULE: config-server
+    container_name: config-server
+    depends_on:
+      - discovery-server
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka
+    ports:
+      - "8888:8888"
+
+  gateway:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.module
+      args:
+        MODULE: gateway
+    container_name: gateway
+    depends_on:
+      - discovery-server
+      - config-server
+    environment:
+      CONFIG_SERVER_HOST: config-server
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka
+    ports:
+      - "8081:8081"
+
+  front:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.module
+      args:
+        MODULE: front
+    container_name: front
+    depends_on:
+      - discovery-server
+      - config-server
+      - gateway
+    environment:
+      <<: *gateway_clients_env
+      CONFIG_SERVER_HOST: config-server
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka
+    ports:
+      - "8080:8080"
+
+  accounts-service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.module
+      args:
+        MODULE: accounts-service
+    container_name: accounts-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      discovery-server:
+        condition: service_started
+      config-server:
+        condition: service_started
+      gateway:
+        condition: service_started
+    environment:
+      <<: *gateway_clients_env
+      CONFIG_SERVER_HOST: config-server
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/mybank
+      SPRING_DATASOURCE_USERNAME: mybank
+      SPRING_DATASOURCE_PASSWORD: mybank
+    ports:
+      - "8091:8091"
+
+  cash-service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.module
+      args:
+        MODULE: cash-service
+    container_name: cash-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      discovery-server:
+        condition: service_started
+      config-server:
+        condition: service_started
+      gateway:
+        condition: service_started
+    environment:
+      <<: *gateway_clients_env
+      CONFIG_SERVER_HOST: config-server
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/mybank
+      SPRING_DATASOURCE_USERNAME: mybank
+      SPRING_DATASOURCE_PASSWORD: mybank
+    ports:
+      - "8092:8092"
+
+  transfer-service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.module
+      args:
+        MODULE: transfer-service
+    container_name: transfer-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      discovery-server:
+        condition: service_started
+      config-server:
+        condition: service_started
+      gateway:
+        condition: service_started
+    environment:
+      <<: *gateway_clients_env
+      CONFIG_SERVER_HOST: config-server
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/mybank
+      SPRING_DATASOURCE_USERNAME: mybank
+      SPRING_DATASOURCE_PASSWORD: mybank
+    ports:
+      - "8093:8093"
+
+  notifications-service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.module
+      args:
+        MODULE: notifications-service
+    container_name: notifications-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      discovery-server:
+        condition: service_started
+      config-server:
+        condition: service_started
+    environment:
+      CONFIG_SERVER_HOST: config-server
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-server:8761/eureka
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/mybank
+      SPRING_DATASOURCE_USERNAME: mybank
+      SPRING_DATASOURCE_PASSWORD: mybank
+    ports:
+      - "8094:8094"

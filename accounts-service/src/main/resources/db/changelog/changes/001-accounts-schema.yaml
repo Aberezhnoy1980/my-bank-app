@@ -1,0 +1,52 @@
+databaseChangeLog:
+  - changeSet:
+      id: accounts-001-create-schema
+      author: mybank
+      changes:
+        - sql:
+            sql: CREATE SCHEMA IF NOT EXISTS accounts
+
+  - changeSet:
+      id: accounts-002-account-table
+      author: mybank
+      changes:
+        - createTable:
+            schemaName: accounts
+            tableName: account
+            columns:
+              - column:
+                  name: username
+                  type: varchar(128)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: full_name
+                  type: varchar(512)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: birth_date
+                  type: date
+                  constraints:
+                    nullable: false
+              - column:
+                  name: balance
+                  type: numeric(19, 2)
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: accounts-003-seed-users
+      author: mybank
+      changes:
+        - sql:
+            dbms: postgresql,h2
+            sql: |
+              INSERT INTO accounts.account (username, full_name, birth_date, balance)
+              VALUES ('demo.user', 'Demo User', DATE '1995-05-20', 10000.00);
+        - sql:
+            dbms: postgresql,h2
+            sql: |
+              INSERT INTO accounts.account (username, full_name, birth_date, balance)
+              VALUES ('alice.user', 'Alice User', DATE '1992-03-15', 5000.00);

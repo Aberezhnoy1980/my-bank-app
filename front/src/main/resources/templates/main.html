@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Bank App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 24px;
+            background-color: #f7f7f7;
+        }
+        .card {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 16px;
+            max-width: 640px;
+        }
+        .error {
+            color: #b00020;
+        }
+        .success {
+            color: #1b7f39;
+        }
+        dl {
+            display: grid;
+            grid-template-columns: 180px 1fr;
+            row-gap: 8px;
+        }
+        dt {
+            font-weight: bold;
+        }
+        .form-row {
+            margin-top: 12px;
+        }
+        label {
+            display: block;
+            margin-bottom: 4px;
+            font-weight: bold;
+        }
+        input {
+            width: 100%;
+            max-width: 320px;
+            padding: 6px 8px;
+            border: 1px solid #c8c8c8;
+            border-radius: 4px;
+        }
+        button {
+            margin-top: 12px;
+            padding: 8px 14px;
+            border: 0;
+            border-radius: 4px;
+            cursor: pointer;
+            background-color: #2f6fed;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+<div class="card">
+    <h1>My Bank App</h1>
+    <p>Account profile from Accounts service.</p>
+    <p class="success" th:if="${successMessage}" th:text="${successMessage}">Profile updated successfully.</p>
+
+    <div th:if="${hasAccount}">
+        <dl>
+            <dt>Username</dt>
+            <dd th:text="${account.username}">demo.user</dd>
+            <dt>Full name</dt>
+            <dd th:text="${account.fullName}">Demo User</dd>
+            <dt>Birth date</dt>
+            <dd th:text="${account.birthDate}">1995-05-20</dd>
+            <dt>Balance</dt>
+            <dd th:text="${account.balance}">10000.00</dd>
+        </dl>
+
+        <form method="post" action="/profile">
+            <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+            <div class="form-row">
+                <label for="fullName">Full name</label>
+                <input id="fullName" name="fullName" type="text" th:value="${account.fullName}" required>
+            </div>
+            <div class="form-row">
+                <label for="birthDate">Birth date</label>
+                <input id="birthDate" name="birthDate" type="date" th:value="${account.birthDate}" required>
+            </div>
+            <button type="submit">Save changes</button>
+        </form>
+
+        <hr style="margin: 24px 0;">
+
+        <h3>Cash operations</h3>
+        <form method="post" action="/cash/deposit">
+            <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+            <div class="form-row">
+                <label for="depositAmount">Deposit amount</label>
+                <input id="depositAmount" name="amount" type="number" step="0.01" min="0.01" required>
+            </div>
+            <button type="submit">Deposit</button>
+        </form>
+
+        <form method="post" action="/cash/withdraw">
+            <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+            <div class="form-row">
+                <label for="withdrawAmount">Withdraw amount</label>
+                <input id="withdrawAmount" name="amount" type="number" step="0.01" min="0.01" required>
+            </div>
+            <button type="submit">Withdraw</button>
+        </form>
+
+        <hr style="margin: 24px 0;">
+
+        <h3>Transfer money</h3>
+        <form method="post" action="/transfer">
+            <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+            <div class="form-row">
+                <label for="recipientUsername">Recipient username</label>
+                <input id="recipientUsername" name="recipientUsername" type="text" placeholder="alice.user" required>
+            </div>
+            <div class="form-row">
+                <label for="amount">Amount</label>
+                <input id="amount" name="amount" type="number" step="0.01" min="0.01" required>
+            </div>
+            <button type="submit">Transfer</button>
+        </form>
+    </div>
+
+    <p class="error" th:if="${errorMessage}" th:text="${errorMessage}">
+        Accounts service is unavailable now.
+    </p>
+</div>
+</body>
+</html>

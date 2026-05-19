@@ -1,0 +1,43 @@
+databaseChangeLog:
+  - changeSet:
+      id: cash-001-create-schema
+      author: mybank
+      changes:
+        - sql:
+            sql: CREATE SCHEMA IF NOT EXISTS cash
+
+  - changeSet:
+      id: cash-002-cash-operation-table
+      author: mybank
+      changes:
+        - createTable:
+            schemaName: cash
+            tableName: cash_operation
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: username
+                  type: varchar(128)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: operation_type
+                  type: varchar(32)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: amount
+                  type: numeric(19, 2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false

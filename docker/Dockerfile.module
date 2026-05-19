@@ -1,0 +1,21 @@
+FROM maven:3.9.9-eclipse-temurin-21 AS build
+WORKDIR /workspace
+
+COPY . .
+
+ARG MODULE
+# Pick Spring Boot repackaged executable jar (exclude *-plain.jar). Avoids COPY *.jar picking the wrong artifact.
+RUN mvn -q -pl "${MODULE}" -am -DskipTests package \
+    && executable="$(find "/workspace/${MODULE}/target" -maxdepth 1 -type f \
+          \( -name "${MODULE}-*.jar" ! -name "*-plain.jar" ! -name "*-stubs.jar" \) \
+          | sort | head -n 1)" \
+    && test -n "${executable}" \
+    && cp "${executable}" /workspace/executable.jar
+
+FROM eclipse-temurin:21-jre
+WORKDIR /opt/app
+
+COPY --from=build /workspace/executable.jar app.jar
+
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "/opt/app/app.jar"]

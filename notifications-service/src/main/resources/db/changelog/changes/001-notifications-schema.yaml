@@ -1,0 +1,38 @@
+databaseChangeLog:
+  - changeSet:
+      id: notifications-001-create-schema
+      author: mybank
+      changes:
+        - sql:
+            sql: CREATE SCHEMA IF NOT EXISTS notifications
+
+  - changeSet:
+      id: notifications-002-notification-event-table
+      author: mybank
+      changes:
+        - createTable:
+            schemaName: notifications
+            tableName: notification_event
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: event_type
+                  type: varchar(128)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: message
+                  type: varchar(4096)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
