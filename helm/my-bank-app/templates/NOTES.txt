@@ -1,0 +1,6 @@
+my-bank-app Helm release installed.
+
+Namespace: {{ .Values.global.namespace }}
+
+Next: build images, fill subchart templates, then:
+  helm upgrade --install my-bank-app ./helm/my-bank-app -n {{ .Values.global.namespace }} --create-namespace

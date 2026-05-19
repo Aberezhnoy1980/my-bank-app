@@ -1,0 +1,11 @@
+enabled: true
+
+image:
+  repository: mybank/gateway
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  port: 8081
+
+replicaCount: 1

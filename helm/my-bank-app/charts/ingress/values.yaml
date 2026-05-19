@@ -1,0 +1,12 @@
+enabled: true
+
+className: nginx
+
+hosts:
+  app: localhost
+  keycloak: localhost
+
+paths:
+  front: /
+  gateway: /api
+  keycloak: /auth

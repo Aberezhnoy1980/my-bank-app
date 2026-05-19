@@ -1,0 +1,11 @@
+enabled: true
+
+image:
+  repository: mybank/notifications-service
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  port: 8094
+
+replicaCount: 1

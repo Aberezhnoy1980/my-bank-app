@@ -1,0 +1,18 @@
+enabled: true
+
+image:
+  repository: postgres
+  tag: "16-alpine"
+  pullPolicy: IfNotPresent
+
+service:
+  port: 5432
+
+database: mybank
+username: mybank
+# Set via Secret in a later commit; placeholder for chart skeleton.
+password: mybank
+
+persistence:
+  enabled: true
+  size: 1Gi

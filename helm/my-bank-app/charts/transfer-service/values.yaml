@@ -1,0 +1,11 @@
+enabled: true
+
+image:
+  repository: mybank/transfer-service
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  port: 8093
+
+replicaCount: 1

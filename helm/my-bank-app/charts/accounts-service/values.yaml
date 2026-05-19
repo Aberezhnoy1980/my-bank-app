@@ -1,0 +1,11 @@
+enabled: true
+
+image:
+  repository: mybank/accounts-service
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  port: 8091
+
+replicaCount: 1
