@@ -8,6 +8,10 @@ global:
     pullPolicy: IfNotPresent
   spring:
     profiles: secure
+  keycloak:
+    realm: mybank
+    issuerUri: http://localhost/realms/mybank
+    serviceSecret: services-secret-change-me
 
 postgres:
   enabled: true

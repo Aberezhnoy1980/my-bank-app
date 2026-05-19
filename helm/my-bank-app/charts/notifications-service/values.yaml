@@ -9,3 +9,18 @@ service:
   port: 8094
 
 replicaCount: 1
+
+spring:
+  profiles: secure
+
+postgres:
+  host: ""
+  port: "5432"
+  secretName: ""
+
+keycloak:
+  host: ""
+  port: 8080
+  realm: mybank
+  issuerUri: ""
+  serviceSecret: services-secret-change-me

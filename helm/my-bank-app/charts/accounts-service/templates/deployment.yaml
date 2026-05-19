@@ -1,0 +1,81 @@
+{{- if .Values.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "accounts-service.fullname" . }}
+  labels:
+    {{- include "accounts-service.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "accounts-service.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "accounts-service.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: accounts-service
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy | default .Values.global.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: {{ .Values.spring.profiles | default .Values.global.spring.profiles | quote }}
+            - name: SPRING_CONFIG_IMPORT
+              value: optional:classpath:/application-local.yml
+            - name: SPRING_CLOUD_CONFIG_ENABLED
+              value: "false"
+            - name: EUREKA_CLIENT_ENABLED
+              value: "false"
+            - name: SPRING_CLOUD_DISCOVERY_ENABLED
+              value: "false"
+            - name: POSTGRES_HOST
+              value: {{ include "accounts-service.postgresHost" . | quote }}
+            - name: POSTGRES_PORT
+              value: {{ .Values.postgres.port | quote }}
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "accounts-service.postgresSecretName" . }}
+                  key: POSTGRES_DB
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "accounts-service.postgresSecretName" . }}
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "accounts-service.postgresSecretName" . }}
+                  key: POSTGRES_PASSWORD
+            - name: APP_NOTIFICATIONS_BASE_URL
+              value: {{ printf "http://%s:%v" (include "accounts-service.gatewayHost" .) (.Values.gateway.port | default 8081) | quote }}
+            - name: KEYCLOAK_ISSUER_URI
+              value: {{ include "accounts-service.keycloakIssuerUri" . | quote }}
+            - name: KEYCLOAK_TOKEN_URI
+              value: {{ printf "http://%s:%v/realms/%s/protocol/openid-connect/token" (include "accounts-service.keycloakHost" .) (.Values.keycloak.port | default 8080) (include "accounts-service.keycloakRealm" .) | quote }}
+            - name: KEYCLOAK_JWK_SET_URI
+              value: {{ printf "http://%s:%v/realms/%s/protocol/openid-connect/certs" (include "accounts-service.keycloakHost" .) (.Values.keycloak.port | default 8080) (include "accounts-service.keycloakRealm" .) | quote }}
+            - name: KEYCLOAK_SERVICE_SECRET
+              value: {{ .Values.keycloak.serviceSecret | default .Values.global.keycloak.serviceSecret | quote }}
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: http
+            initialDelaySeconds: 90
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 6
+{{- end }}
