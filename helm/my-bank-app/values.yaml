@@ -17,6 +17,14 @@ keycloak:
 
 gateway:
   enabled: true
+  keycloak:
+    issuerUri: http://localhost/realms/mybank
+
+ingress:
+  enabled: true
+  className: ""
+  hosts:
+    app: localhost
 
 front:
   enabled: true
@@ -31,7 +39,4 @@ transfer-service:
   enabled: true
 
 notifications-service:
-  enabled: true
-
-ingress:
   enabled: true

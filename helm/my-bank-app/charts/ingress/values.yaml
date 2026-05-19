@@ -1,12 +1,20 @@
 enabled: true
 
-className: nginx
+# Rancher Desktop (k3s): leave empty or set "traefik". Install ingress-nginx for "nginx".
+className: ""
+
+annotations: {}
 
 hosts:
   app: localhost
-  keycloak: localhost
 
 paths:
   front: /
   gateway: /api
-  keycloak: /auth
+  # Keycloak paths; tune in keycloak subchart (commit 5) if using a relative HTTP path.
+  keycloak: /realms
+
+backendPorts:
+  front: 8080
+  gateway: 8081
+  keycloak: 8080

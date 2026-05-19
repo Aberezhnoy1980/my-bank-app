@@ -9,3 +9,29 @@ service:
   port: 8081
 
 replicaCount: 1
+
+spring:
+  profiles: secure
+
+keycloak:
+  # External issuer via Ingress (adjust host when not using localhost).
+  issuerUri: http://localhost/realms/mybank
+
+# Static routes: K8s Service DNS instead of lb:// + Eureka.
+routes:
+  - id: accounts-service
+    service: accounts-service
+    port: 8091
+    path: /api/accounts/**
+  - id: cash-service
+    service: cash-service
+    port: 8092
+    path: /api/cash/**
+  - id: transfer-service
+    service: transfer-service
+    port: 8093
+    path: /api/transfers/**
+  - id: notifications-service
+    service: notifications-service
+    port: 8094
+    path: /api/notifications/**
