@@ -10,9 +10,13 @@ service:
 
 database: mybank
 username: mybank
-# Set via Secret in a later commit; placeholder for chart skeleton.
+# Stored in Secret; override for non-dev environments (helm --set postgres.password=...).
 password: mybank
 
 persistence:
   enabled: true
   size: 1Gi
+  # Leave empty to use the cluster default StorageClass (Rancher Desktop).
+  storageClass: ""
+
+replicaCount: 1
