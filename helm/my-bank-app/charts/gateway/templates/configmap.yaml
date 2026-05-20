@@ -25,8 +25,13 @@ data:
         oauth2:
           resourceserver:
             jwt:
-              issuer-uri: ${KEYCLOAK_ISSUER_URI:{{ .Values.keycloak.issuerUri }}}
+              issuer-uri: {{ .Values.keycloak.issuerUri | default .Values.global.keycloak.issuerUri | quote }}
     app:
       security:
         enabled: true
+    management:
+      endpoints:
+        web:
+          exposure:
+            include: health,info
 {{- end }}

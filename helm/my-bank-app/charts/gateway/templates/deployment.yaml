@@ -33,10 +33,6 @@ spec:
               value: "false"
             - name: SPRING_CLOUD_DISCOVERY_ENABLED
               value: "false"
-            {{- if .Values.keycloak.issuerUri }}
-            - name: KEYCLOAK_ISSUER_URI
-              value: {{ .Values.keycloak.issuerUri | quote }}
-            {{- end }}
           volumeMounts:
             - name: config
               mountPath: /config

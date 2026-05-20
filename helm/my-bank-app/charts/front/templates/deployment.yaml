@@ -26,15 +26,13 @@ spec:
             - name: SPRING_PROFILES_ACTIVE
               value: {{ .Values.spring.profiles | default .Values.global.spring.profiles | quote }}
             - name: SPRING_CONFIG_IMPORT
-              value: optional:classpath:/application-local.yml
+              value: optional:file:/config/application-k8s.yml
             - name: SPRING_CLOUD_CONFIG_ENABLED
               value: "false"
             - name: EUREKA_CLIENT_ENABLED
               value: "false"
             - name: SPRING_CLOUD_DISCOVERY_ENABLED
               value: "false"
-            - name: APP_GATEWAY_BASE_URL
-              value: {{ printf "http://%s:%v" (include "front.gatewayHost" .) (.Values.gateway.port | default 8081) | quote }}
             - name: KEYCLOAK_OIDC_ISSUER_URI
               value: {{ include "front.oidcIssuerUri" . | quote }}
             - name: KEYCLOAK_AUTHORIZATION_URI
@@ -44,7 +42,14 @@ spec:
             - name: KEYCLOAK_JWK_SET_URI
               value: {{ printf "http://%s:%v/realms/%s/protocol/openid-connect/certs" (include "front.keycloakHost" .) (.Values.keycloak.port | default 8080) (include "front.keycloakRealm" .) | quote }}
             - name: KEYCLOAK_FRONT_SECRET
-              value: {{ .Values.keycloak.frontSecret | default .Values.global.keycloak.frontSecret | quote }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-oauth
+                  key: KEYCLOAK_FRONT_SECRET
+          volumeMounts:
+            - name: config
+              mountPath: /config
+              readOnly: true
           readinessProbe:
             httpGet:
               path: /actuator/health
@@ -61,4 +66,8 @@ spec:
             periodSeconds: 15
             timeoutSeconds: 5
             failureThreshold: 6
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "front.fullname" . }}-config
 {{- end }}

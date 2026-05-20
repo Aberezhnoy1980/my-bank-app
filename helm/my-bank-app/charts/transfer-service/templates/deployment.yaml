@@ -22,11 +22,14 @@ spec:
           ports:
             - name: http
               containerPort: {{ .Values.service.port }}
+          envFrom:
+            - secretRef:
+                name: {{ include "transfer-service.postgresSecretName" . }}
           env:
             - name: SPRING_PROFILES_ACTIVE
               value: {{ .Values.spring.profiles | default .Values.global.spring.profiles | quote }}
             - name: SPRING_CONFIG_IMPORT
-              value: optional:classpath:/application-local.yml
+              value: optional:file:/config/application-k8s.yml
             - name: SPRING_CLOUD_CONFIG_ENABLED
               value: "false"
             - name: EUREKA_CLIENT_ENABLED
@@ -37,33 +40,15 @@ spec:
               value: {{ include "transfer-service.postgresHost" . | quote }}
             - name: POSTGRES_PORT
               value: {{ .Values.postgres.port | quote }}
-            - name: POSTGRES_DB
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "transfer-service.postgresSecretName" . }}
-                  key: POSTGRES_DB
-            - name: POSTGRES_USER
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "transfer-service.postgresSecretName" . }}
-                  key: POSTGRES_USER
-            - name: POSTGRES_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "transfer-service.postgresSecretName" . }}
-                  key: POSTGRES_PASSWORD
-            - name: APP_ACCOUNTS_BASE_URL
-              value: {{ printf "http://%s:%v" (include "transfer-service.gatewayHost" .) (.Values.gateway.port | default 8081) | quote }}
-            - name: APP_NOTIFICATIONS_BASE_URL
-              value: {{ printf "http://%s:%v" (include "transfer-service.gatewayHost" .) (.Values.gateway.port | default 8081) | quote }}
-            - name: KEYCLOAK_ISSUER_URI
-              value: {{ include "transfer-service.keycloakIssuerUri" . | quote }}
-            - name: KEYCLOAK_TOKEN_URI
-              value: {{ printf "http://%s:%v/realms/%s/protocol/openid-connect/token" (include "transfer-service.keycloakHost" .) (.Values.keycloak.port | default 8080) (include "transfer-service.keycloakRealm" .) | quote }}
-            - name: KEYCLOAK_JWK_SET_URI
-              value: {{ printf "http://%s:%v/realms/%s/protocol/openid-connect/certs" (include "transfer-service.keycloakHost" .) (.Values.keycloak.port | default 8080) (include "transfer-service.keycloakRealm" .) | quote }}
             - name: KEYCLOAK_SERVICE_SECRET
-              value: {{ .Values.keycloak.serviceSecret | default .Values.global.keycloak.serviceSecret | quote }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-oauth
+                  key: KEYCLOAK_SERVICE_SECRET
+          volumeMounts:
+            - name: config
+              mountPath: /config
+              readOnly: true
           readinessProbe:
             httpGet:
               path: /actuator/health
@@ -80,4 +65,8 @@ spec:
             periodSeconds: 15
             timeoutSeconds: 5
             failureThreshold: 6
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "transfer-service.fullname" . }}-config
 {{- end }}

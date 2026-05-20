@@ -1,0 +1,82 @@
+{{- if .Values.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "cash-service.fullname" . }}-config
+  labels:
+    {{- include "cash-service.labels" . | nindent 4 }}
+data:
+  application-k8s.yml: |
+    server:
+      port: {{ .Values.service.port }}
+    spring:
+      application:
+        name: cash-service
+      datasource:
+        url: jdbc:postgresql://${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
+        username: ${POSTGRES_USER}
+        password: ${POSTGRES_PASSWORD}
+        driver-class-name: org.postgresql.Driver
+      jpa:
+        hibernate:
+          ddl-auto: validate
+        open-in-view: false
+        properties:
+          hibernate.default_schema: cash
+      liquibase:
+        change-log: classpath:db/changelog/db.changelog-master.yaml
+        default-schema: cash
+        liquibase-schema: public
+      security:
+        oauth2:
+          resourceserver:
+            jwt:
+              issuer-uri: {{ include "cash-service.keycloakIssuerUri" . | quote }}
+          client:
+            registration:
+              services-client:
+                provider: keycloak
+                client-id: mybank-services
+                client-secret: ${KEYCLOAK_SERVICE_SECRET}
+                authorization-grant-type: client_credentials
+                scope: openid
+            provider:
+              keycloak:
+                token-uri: {{ printf "http://%s:%v/realms/%s/protocol/openid-connect/token" (include "cash-service.keycloakHost" .) (.Values.keycloak.port | default 8080) (include "cash-service.keycloakRealm" .) | quote }}
+                jwk-set-uri: {{ printf "http://%s:%v/realms/%s/protocol/openid-connect/certs" (include "cash-service.keycloakHost" .) (.Values.keycloak.port | default 8080) (include "cash-service.keycloakRealm" .) | quote }}
+    app:
+      accounts:
+        base-url: {{ printf "http://%s:%v" (include "cash-service.gatewayHost" .) (.Values.gateway.port | default 8081) | quote }}
+      notifications:
+        base-url: {{ printf "http://%s:%v" (include "cash-service.gatewayHost" .) (.Values.gateway.port | default 8081) | quote }}
+      cash:
+        fallback-username: demo.user
+      security:
+        enabled: true
+      oauth2:
+        client-registration-id: services-client
+    resilience4j:
+      circuitbreaker:
+        instances:
+          accounts:
+            sliding-window-size: 10
+            minimum-number-of-calls: 5
+            permitted-number-of-calls-in-half-open-state: 3
+            wait-duration-in-open-state: 10s
+            failure-rate-threshold: 50
+      retry:
+        instances:
+          accounts:
+            max-attempts: 3
+            wait-duration: 200ms
+            enable-exponential-backoff: true
+            exponential-backoff-multiplier: 2
+            ignore-exceptions:
+              - com.mybank.cash.service.CashOperationException
+              - org.springframework.web.client.RestClientResponseException
+    management:
+      endpoints:
+        web:
+          exposure:
+            include: health,info
+{{- end }}

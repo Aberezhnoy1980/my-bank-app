@@ -1,0 +1,43 @@
+{{- if .Values.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "front.fullname" . }}-config
+  labels:
+    {{- include "front.labels" . | nindent 4 }}
+data:
+  application-k8s.yml: |
+    server:
+      port: {{ .Values.service.port }}
+    app:
+      security:
+        mode: oauth2-login
+        enabled: true
+      gateway:
+        base-url: {{ printf "http://%s:%v" (include "front.gatewayHost" .) (.Values.gateway.port | default 8081) | quote }}
+    spring:
+      application:
+        name: front
+      security:
+        oauth2:
+          client:
+            registration:
+              keycloak:
+                provider: keycloak
+                client-id: mybank-front
+                client-secret: ${KEYCLOAK_FRONT_SECRET}
+                scope: openid,profile,offline_access
+                authorization-grant-type: authorization_code
+                redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            provider:
+              keycloak:
+                authorization-uri: {{ printf "%s/realms/%s/protocol/openid-connect/auth" (include "front.publicBaseUrl" .) (include "front.keycloakRealm" .) | quote }}
+                token-uri: {{ printf "http://%s:%v/realms/%s/protocol/openid-connect/token" (include "front.keycloakHost" .) (.Values.keycloak.port | default 8080) (include "front.keycloakRealm" .) | quote }}
+                jwk-set-uri: {{ printf "http://%s:%v/realms/%s/protocol/openid-connect/certs" (include "front.keycloakHost" .) (.Values.keycloak.port | default 8080) (include "front.keycloakRealm" .) | quote }}
+                user-name-attribute: preferred_username
+    management:
+      endpoints:
+        web:
+          exposure:
+            include: health,info
+{{- end }}
