@@ -25,7 +25,8 @@ data:
         oauth2:
           resourceserver:
             jwt:
-              issuer-uri: {{ .Values.keycloak.issuerUri | default .Values.global.keycloak.issuerUri | quote }}
+              issuer-uri: {{ include "gateway.keycloakIssuerUri" . | quote }}
+              jwk-set-uri: {{ printf "http://%s:%v/realms/%s/protocol/openid-connect/certs" (include "gateway.keycloakHost" .) (.Values.keycloak.port | default 8080) (include "gateway.keycloakRealm" .) | quote }}
     app:
       security:
         enabled: true

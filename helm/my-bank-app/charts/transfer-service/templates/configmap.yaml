@@ -32,6 +32,7 @@ data:
           resourceserver:
             jwt:
               issuer-uri: {{ include "transfer-service.keycloakIssuerUri" . | quote }}
+              jwk-set-uri: {{ include "transfer-service.keycloakJwkSetUri" . | quote }}
           client:
             registration:
               services-client:

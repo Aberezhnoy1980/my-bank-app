@@ -53,3 +53,7 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- define "accounts-service.keycloakIssuerUri" -}}
 {{- .Values.keycloak.issuerUri | default .Values.global.keycloak.issuerUri | default "http://localhost/realms/mybank" }}
 {{- end }}
+
+{{- define "accounts-service.keycloakJwkSetUri" -}}
+{{- printf "http://%s:%v/realms/%s/protocol/openid-connect/certs" (include "accounts-service.keycloakHost" .) (.Values.keycloak.port | default 8080) (include "accounts-service.keycloakRealm" .) }}
+{{- end }}

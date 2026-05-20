@@ -32,6 +32,7 @@ data:
           resourceserver:
             jwt:
               issuer-uri: {{ include "cash-service.keycloakIssuerUri" . | quote }}
+              jwk-set-uri: {{ include "cash-service.keycloakJwkSetUri" . | quote }}
           client:
             registration:
               services-client:

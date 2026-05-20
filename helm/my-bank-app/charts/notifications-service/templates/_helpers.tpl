@@ -49,3 +49,7 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- define "notifications-service.keycloakIssuerUri" -}}
 {{- .Values.keycloak.issuerUri | default .Values.global.keycloak.issuerUri | default "http://localhost/realms/mybank" }}
 {{- end }}
+
+{{- define "notifications-service.keycloakJwkSetUri" -}}
+{{- printf "http://%s:%v/realms/%s/protocol/openid-connect/certs" (include "notifications-service.keycloakHost" .) (.Values.keycloak.port | default 8080) (include "notifications-service.keycloakRealm" .) }}
+{{- end }}

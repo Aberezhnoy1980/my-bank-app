@@ -33,3 +33,15 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- define "gateway.configMapName" -}}
 {{- printf "%s-config" (include "gateway.fullname" .) }}
 {{- end }}
+
+{{- define "gateway.keycloakHost" -}}
+{{- .Values.keycloak.host | default (printf "%s-keycloak" .Release.Name) }}
+{{- end }}
+
+{{- define "gateway.keycloakRealm" -}}
+{{- .Values.keycloak.realm | default .Values.global.keycloak.realm | default "mybank" }}
+{{- end }}
+
+{{- define "gateway.keycloakIssuerUri" -}}
+{{- .Values.keycloak.issuerUri | default .Values.global.keycloak.issuerUri | default "http://localhost/realms/mybank" }}
+{{- end }}

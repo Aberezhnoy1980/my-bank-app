@@ -9,6 +9,11 @@ data:
   application-k8s.yml: |
     server:
       port: {{ .Values.service.port }}
+      forward-headers-strategy: framework
+      servlet:
+        session:
+          cookie:
+            same-site: lax
     app:
       security:
         mode: oauth2-login
@@ -28,7 +33,7 @@ data:
                 client-secret: ${KEYCLOAK_FRONT_SECRET}
                 scope: openid,profile,offline_access
                 authorization-grant-type: authorization_code
-                redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+                redirect-uri: {{ printf "%s/login/oauth2/code/keycloak" (include "front.publicBaseUrl" .) | quote }}
             provider:
               keycloak:
                 authorization-uri: {{ printf "%s/realms/%s/protocol/openid-connect/auth" (include "front.publicBaseUrl" .) (include "front.keycloakRealm" .) | quote }}

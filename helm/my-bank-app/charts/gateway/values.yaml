@@ -14,7 +14,10 @@ spring:
   profiles: secure
 
 keycloak:
-  # External issuer via Ingress (adjust host when not using localhost).
+  host: ""
+  port: 8080
+  realm: mybank
+  # iss in JWT (browser/Ingress); JWKS fetched inside cluster.
   issuerUri: http://localhost/realms/mybank
 
 # Static routes: K8s Service DNS instead of lb:// + Eureka.
