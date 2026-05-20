@@ -13,11 +13,13 @@
       "secret": "front-secret-change-me",
       "redirectUris": [
         "http://localhost/*",
-        "http://localhost:8080/*"
+        "http://localhost:8080/*",
+        "https://localhost/*"
       ],
       "webOrigins": [
         "http://localhost",
-        "http://localhost:8080"
+        "http://localhost:8080",
+        "https://localhost"
       ],
       "protocol": "openid-connect",
       "publicClient": false,

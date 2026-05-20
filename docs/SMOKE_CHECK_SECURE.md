@@ -76,7 +76,7 @@ helm test mybank -n mybank
 | Services start before Keycloak | Wait for Keycloak healthcheck / `depends_on: service_healthy` in Compose; in K8s wait for Keycloak pod Ready |
 | `export` in shell does not affect running containers | Set env in Compose or `--env-file` |
 | **K8s:** `401` on `/api/accounts/me` with valid token; UI «Accounts service is unavailable» | JWT **`issuer-uri`** is public (`http://localhost/realms/mybank`), but pods cannot load JWKS from that URL. Set **`spring.security.oauth2.resourceserver.jwt.jwk-set-uri`** to in-cluster Keycloak (`http://mybank-keycloak:8080/realms/mybank/protocol/openid-connect/certs`) on **gateway** and all JWT resource servers — see Helm ConfigMaps. Symptom: Gateway may authorize the request, downstream still returns 401. |
-| **K8s:** `[authorization_request_not_found]` in browser | Use **`http://localhost`** consistently; clear site cookies; optional Front fix: cookie-backed OAuth2 state + fixed `redirect-uri` in chart. |
+| **K8s:** `[authorization_request_not_found]` or redirect loop in browser | Open **`http://localhost/`** explicitly (typing `localhost` alone may use `https://` via HSTS — another cookie jar). Clear site data for localhost. Chart sets fixed `redirect-uri` and `forward-headers-strategy`. After a failed login, do not edit `/login?error` manually — log out or clear cookies and retry. |
 | **K8s:** `ImagePullBackOff` | Build and tag `mybank/<module>:latest` locally (see README) |
 | **K8s:** CrashLoop / probe failures right after install | JVM warm-up; chart uses higher `initialDelaySeconds` on readiness/liveness — wait or `kubectl logs` |
 | **Helm:** white screen / no Keycloak on `/` | `helm upgrade --reset-values` if subcharts were previously disabled with `--set ...=false` |

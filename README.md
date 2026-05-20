@@ -3,19 +3,21 @@
 ![Java](https://img.shields.io/badge/Java-21-orange)
 ![Maven](https://img.shields.io/badge/Maven-3.x-C71A36)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.3-6DB33F)
-![Spring Cloud](https://img.shields.io/badge/Spring%20Cloud-2023.0-0A2540)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791)
 ![Liquibase](https://img.shields.io/badge/Liquibase-migrations-2962FF)
 ![OAuth2](https://img.shields.io/badge/OAuth2-JWT-4B32C3)
 ![Keycloak](https://img.shields.io/badge/Keycloak-OIDC-5865F2)
-![Docker](https://img.shields.io/badge/Docker-Compose-2496ED)
 [![CI](https://github.com/Aberezhnoy1980/my-bank-app/actions/workflows/ci.yml/badge.svg)](https://github.com/Aberezhnoy1980/my-bank-app/actions/workflows/ci.yml)
 
-![Eureka](https://img.shields.io/badge/Eureka-Service%20Discovery-6DB33F)
-![Spring Cloud Config](https://img.shields.io/badge/Spring%20Cloud%20Config-externalized-6DB33F)
+![Docker Compose](https://img.shields.io/badge/Docker%20Compose-sprint%209-2496ED)
+![Kubernetes](https://img.shields.io/badge/Kubernetes-sprint%2010-326CE5)
+![Helm](https://img.shields.io/badge/Helm-umbrella%20chart-0F1689)
 ![Spring Cloud Gateway](https://img.shields.io/badge/Spring%20Cloud%20Gateway-API-6DB33F)
 ![Spring Cloud Contract](https://img.shields.io/badge/Spring%20Cloud%20Contract-4.1-0A2540)
-![Thymeleaf](https://img.shields.io/badge/Thymeleaf-templates-005F0F)
+
+![Eureka](https://img.shields.io/badge/Eureka-Compose%2Flocal-9CA3AF)
+![Spring Cloud Config](https://img.shields.io/badge/Spring%20Cloud%20Config-Compose%2Flocal-9CA3AF)
+![Thymeleaf](https://img.shields.io/badge/Thymeleaf-UI-005F0F)
 ![JUnit 5](https://img.shields.io/badge/JUnit-5-25A162)
 
 Учебный микросервисный проект банка (**module 3**, Yandex Practicum; **sprint 9** — Docker Compose / Eureka / Config Server; **sprint 10** — Kubernetes / Helm).
@@ -153,7 +155,7 @@ kubectl -n mybank wait --for=condition=ready pod --all --timeout=600s
 
 | Назначение | URL |
 | ---------- | --- |
-| Front UI | http://localhost/ |
+| Front UI | http://localhost/ (type **`http://`**, not bare `localhost` — avoids HSTS/https cookie mismatch) |
 | API (через Ingress) | http://localhost/api/... |
 | Keycloak OIDC | http://localhost/realms/mybank |
 | Keycloak Admin | http://localhost/admin |
