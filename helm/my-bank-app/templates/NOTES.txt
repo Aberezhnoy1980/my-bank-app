@@ -1,6 +1,21 @@
-my-bank-app Helm release installed.
+my-bank-app Helm release installed in namespace {{ .Values.global.namespace }}.
 
-Namespace: {{ .Values.global.namespace }}
+IMPORTANT: If you previously ran helm with --set keycloak.enabled=false (or front/ingress),
+those flags are saved in the release. Re-enable everything:
 
-Next: build images, fill subchart templates, then:
-  helm upgrade --install my-bank-app ./helm/my-bank-app -n {{ .Values.global.namespace }} --create-namespace
+  helm upgrade --install mybank ./helm/my-bank-app -n {{ .Values.global.namespace }} --reset-values
+
+URLs (Ingress host {{ index .Values "ingress" "hosts" "app" | default "localhost" }}):
+  Front UI:     http://{{ index .Values "ingress" "hosts" "app" | default "localhost" }}/
+  API Gateway:  http://{{ index .Values "ingress" "hosts" "app" | default "localhost" }}/api/...
+  Keycloak OIDC: http://{{ index .Values "ingress" "hosts" "app" | default "localhost" }}/realms/mybank
+  Keycloak Admin: http://{{ index .Values "ingress" "hosts" "app" | default "localhost" }}/admin
+
+Keycloak is NOT on the site root (/). Root is the Front app after images are built.
+
+Build local images (Rancher Desktop / nerdctl), then load or push:
+  docker build -f docker/Dockerfile.module --build-arg MODULE=gateway -t mybank/gateway:latest .
+  (repeat for front, accounts-service, cash-service, transfer-service, notifications-service)
+
+Check pods: kubectl -n {{ .Values.global.namespace }} get pods
+Port-forward Keycloak only: kubectl -n {{ .Values.global.namespace }} port-forward svc/{{ .Release.Name }}-keycloak 8090:8080

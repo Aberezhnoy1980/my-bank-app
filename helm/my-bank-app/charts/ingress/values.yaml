@@ -11,8 +11,9 @@ hosts:
 paths:
   front: /
   gateway: /api
-  # Keycloak paths; tune in keycloak subchart (commit 5) if using a relative HTTP path.
-  keycloak: /realms
+  # Keycloak OIDC + admin console (admin UI: http://localhost/admin).
+  keycloakRealms: /realms
+  keycloakAdmin: /admin
 
 backendPorts:
   front: 8080

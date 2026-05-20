@@ -24,7 +24,14 @@ spec:
                 name: {{ include "ingress.backendService" (list . "gateway") }}
                 port:
                   number: {{ .Values.backendPorts.gateway }}
-          - path: {{ .Values.paths.keycloak }}
+          - path: {{ .Values.paths.keycloakRealms }}
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "ingress.backendService" (list . "keycloak") }}
+                port:
+                  number: {{ .Values.backendPorts.keycloak }}
+          - path: {{ .Values.paths.keycloakAdmin }}
             pathType: Prefix
             backend:
               service:

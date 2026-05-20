@@ -8,9 +8,18 @@ image:
 service:
   port: 8080
 
+replicaCount: 1
+
 admin:
   username: admin
   password: admin
+
+# Public URL for JWT iss (via Ingress host, no port).
+hostname: http://localhost
+hostnameBackchannelDynamic: "true"
+proxyHeaders: xforwarded
+
+realm: mybank
 
 realmImport:
   enabled: true
