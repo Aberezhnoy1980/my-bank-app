@@ -18,7 +18,7 @@
 ![Thymeleaf](https://img.shields.io/badge/Thymeleaf-templates-005F0F)
 ![JUnit 5](https://img.shields.io/badge/JUnit-5-25A162)
 
-Учебный микросервисный проект банка (**module 3 / sprint 9**, Yandex Practicum).
+Учебный микросервисный проект банка (**module 3**, Yandex Practicum; **sprint 9** — Docker Compose / Eureka / Config Server; **sprint 10** — Kubernetes / Helm).
 
 ![Схема взаимодействия сервисов](./docs/img/Image.png)
 
@@ -40,7 +40,7 @@
 - **Безопасность:** OAuth2 (Authorization Code для браузера, Client Credentials между сервисами), Keycloak в профиле `secure`  
 - **Контракты:** Spring Cloud Contract — producer `accounts-service`, consumers `cash-service` и `transfer-service` (проверка против stubs)  
 - **Отказоустойчивость:** Resilience4j Circuit Breaker + Retry на вызовах **Accounts** из **cash-service** / **transfer-service**  
-- **Контейнеризация:** Docker, Docker Compose  
+- **Контейнеризация:** Docker, Docker Compose; **оркестрация (sprint 10):** Kubernetes, Helm (`helm/my-bank-app`)  
 - **Externalized Config:** Spring Cloud Config Server; канонические YAML для приложений лежат в **`config-server/src/main/resources/config/`** — общий **`application.yml`** (Eureka, Actuator) и файлы **`{spring.application.name}.yml`**. В каждом модуле **`application-local.yml`** задаёт те же значения для автономного старта без Config Server; при доступном сервере конфигурации последний импорт в **`application.yml`** подмешивает определения поверх локальных. В Docker Compose для клиентов задаётся **`CONFIG_SERVER_HOST=config-server`** (хост Config Server вместо `localhost`).
 
 Источник истины по балансу — **accounts-service**; **cash** и **transfer** хранят у себя записи аудита операций (без дублирования баланса).
@@ -62,6 +62,8 @@
 ## Текущее состояние
 
 Реализованы микросервисы и Gateway, профиль **`secure`** с Keycloak/JWT, персистентность для перечисленных schema, контрактные тесты Cash/Transfer → Accounts (Spring Cloud Contract).
+
+**Sprint 10:** деплой в локальный Kubernetes (Rancher Desktop / k3s) через umbrella-чарт Helm; runtime-конфигурация в ConfigMap/Secret (Eureka и Config Server **не** входят в K8s-контур). Подробности — раздел [Kubernetes (Helm)](#kubernetes-helm) и **[docs/SMOKE_CHECK_SECURE.md](docs/SMOKE_CHECK_SECURE.md)** (режим C).
 
 ## Запуск без Docker (локальная разработка)
 
@@ -109,7 +111,69 @@ make down
 make down-secure
 ```
 
-**Полный стек в Docker с JWT** (`SPRING_PROFILES_ACTIVE=secure`): поверх **`docker-compose.yml`** подключается **`docker-compose.secure.yml`** — переменные Spring Security, **healthcheck** Keycloak, **`depends_on: service_healthy`**. Быстрая проверка API: **`make smoke-c`**. Переменные для профиля **`secure`**: **[`.env.example`](.env.example)**; чек-лист контуров A/B — **[docs/SMOKE_CHECK_SECURE.md](docs/SMOKE_CHECK_SECURE.md)**.
+**Полный стек в Docker с JWT** (`SPRING_PROFILES_ACTIVE=secure`): поверх **`docker-compose.yml`** подключается **`docker-compose.secure.yml`** — переменные Spring Security, **healthcheck** Keycloak, **`depends_on: service_healthy`**. Быстрая проверка API: **`make smoke-c`**. Переменные для профиля **`secure`**: **[`.env.example`](.env.example)**; чек-лист контуров A/B/C — **[docs/SMOKE_CHECK_SECURE.md](docs/SMOKE_CHECK_SECURE.md)**.
+
+## Kubernetes (Helm)
+
+Целевой контур: **Ingress** на хосте `localhost` → Front (`/`), Gateway (`/api`), Keycloak (`/realms`, `/admin`); один PostgreSQL (StatefulSet); маршруты Gateway на ClusterIP-сервисы (`http://mybank-<service>:port`).
+
+**Требования:** локальный кластер (например **Rancher Desktop** с включённым Kubernetes), `kubectl`, `helm`, собранные образы `mybank/*:latest`.
+
+### 1. Сборка образов
+
+Из корня репозитория (в **zsh** не используйте `$module` в теге — подставляйте имя модуля явно):
+
+```bash
+for module in gateway front accounts-service cash-service transfer-service notifications-service; do
+  docker build -f docker/Dockerfile.module --build-arg MODULE="${module}" -t "mybank/${module}:latest" .
+done
+```
+
+### 2. Установка release
+
+```bash
+kubectl create namespace mybank --dry-run=client -o yaml | kubectl apply -f -
+helm upgrade --install mybank helm/my-bank-app -n mybank
+```
+
+Если ранее отключали subcharts через `--set keycloak.enabled=false` и т.п., сбросьте сохранённые values:
+
+```bash
+helm upgrade --install mybank helm/my-bank-app -n mybank --reset-values
+```
+
+Дождитесь **Running** (JVM на локальном k8s стартует 2–3 минуты):
+
+```bash
+kubectl -n mybank get pods
+kubectl -n mybank wait --for=condition=ready pod --all --timeout=600s
+```
+
+### 3. URL и smoke
+
+| Назначение | URL |
+| ---------- | --- |
+| Front UI | http://localhost/ |
+| API (через Ingress) | http://localhost/api/... |
+| Keycloak OIDC | http://localhost/realms/mybank |
+| Keycloak Admin | http://localhost/admin |
+
+Логин UI: `demo.user` / `demo`. API с токеном и типичные проблемы K8s — **[docs/SMOKE_CHECK_SECURE.md](docs/SMOKE_CHECK_SECURE.md)** (режим **C**).
+
+Проверка чарта:
+
+```bash
+helm lint helm/my-bank-app
+helm test mybank -n mybank
+```
+
+Полная переустановка (образы Docker **остаются** локально; удаляются release и данные в namespace, включая PVC Postgres при `delete namespace`):
+
+```bash
+helm uninstall mybank -n mybank
+kubectl delete namespace mybank
+# затем снова create namespace + helm upgrade --install ...
+```
 
 ## Маршруты Gateway
 
@@ -120,7 +184,7 @@ make down-secure
 | `/api/transfers/**` | transfer-service |
 | `/api/notifications/**` | notifications-service |
 
-UI: `http://localhost:8080`. HTTP-клиенты приложений обращаются к API через Gateway на порту **8081**.
+UI: **Docker Compose** — `http://localhost:8080`; **Kubernetes (Ingress)** — `http://localhost/`. HTTP-клиенты к API: Compose — Gateway **8081**; K8s — `http://localhost/api/...` через Ingress.
 
 ## OAuth2 и Keycloak (профиль `secure`)
 
