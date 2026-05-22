@@ -1,0 +1,28 @@
+enabled: true
+
+image:
+  repository: mybank/front
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  port: 8080
+
+replicaCount: 1
+
+spring:
+  profiles: secure
+
+# Browser-facing URL (Ingress host without port).
+publicBaseUrl: http://localhost
+
+gateway:
+  host: ""
+  port: 8081
+
+keycloak:
+  host: ""
+  port: 8080
+  realm: mybank
+  oidcIssuerUri: ""
+  frontSecret: front-secret-change-me

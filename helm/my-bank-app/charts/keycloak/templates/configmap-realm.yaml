@@ -1,0 +1,11 @@
+{{- if and .Values.enabled .Values.realmImport.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "keycloak.realmConfigMapName" . }}
+  labels:
+    {{- include "keycloak.labels" . | nindent 4 }}
+data:
+  mybank-realm.json: |-
+{{ .Files.Get "realm/mybank-realm.json" | indent 4 }}
+{{- end }}

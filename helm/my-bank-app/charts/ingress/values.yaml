@@ -1,0 +1,21 @@
+enabled: true
+
+# Rancher Desktop (k3s): leave empty or set "traefik". Install ingress-nginx for "nginx".
+className: ""
+
+annotations: {}
+
+hosts:
+  app: localhost
+
+paths:
+  front: /
+  gateway: /api
+  # Keycloak OIDC + admin console (admin UI: http://localhost/admin).
+  keycloakRealms: /realms
+  keycloakAdmin: /admin
+
+backendPorts:
+  front: 8080
+  gateway: 8081
+  keycloak: 8080

@@ -1,0 +1,51 @@
+# Umbrella values — overrides for subcharts in charts/.
+# Subchart keys match directory names under charts/.
+
+global:
+  namespace: mybank
+  image:
+    # Local images built via docker/Dockerfile.module (see README).
+    pullPolicy: IfNotPresent
+  spring:
+    profiles: secure
+  keycloak:
+    realm: mybank
+    hostname: http://localhost
+    publicBaseUrl: http://localhost
+    issuerUri: http://localhost/realms/mybank
+    serviceSecret: services-secret-change-me
+    frontSecret: front-secret-change-me
+
+postgres:
+  enabled: true
+
+keycloak:
+  enabled: true
+  hostname: http://localhost
+
+gateway:
+  enabled: true
+  keycloak:
+    issuerUri: http://localhost/realms/mybank
+
+ingress:
+  enabled: true
+  className: ""
+  hosts:
+    app: localhost
+
+front:
+  enabled: true
+  publicBaseUrl: http://localhost
+
+accounts-service:
+  enabled: true
+
+cash-service:
+  enabled: true
+
+transfer-service:
+  enabled: true
+
+notifications-service:
+  enabled: true

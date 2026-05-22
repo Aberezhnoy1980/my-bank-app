@@ -1,0 +1,60 @@
+{{- if .Values.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "accounts-service.fullname" . }}-config
+  labels:
+    {{- include "accounts-service.labels" . | nindent 4 }}
+data:
+  application-k8s.yml: |
+    server:
+      port: {{ .Values.service.port }}
+    spring:
+      application:
+        name: accounts-service
+      datasource:
+        url: jdbc:postgresql://${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
+        username: ${POSTGRES_USER}
+        password: ${POSTGRES_PASSWORD}
+        driver-class-name: org.postgresql.Driver
+      jpa:
+        hibernate:
+          ddl-auto: validate
+        open-in-view: false
+        properties:
+          hibernate.default_schema: accounts
+      liquibase:
+        change-log: classpath:db/changelog/db.changelog-master.yaml
+        default-schema: accounts
+        liquibase-schema: public
+      security:
+        oauth2:
+          resourceserver:
+            jwt:
+              issuer-uri: {{ include "accounts-service.keycloakIssuerUri" . | quote }}
+              jwk-set-uri: {{ include "accounts-service.keycloakJwkSetUri" . | quote }}
+          client:
+            registration:
+              services-client:
+                provider: keycloak
+                client-id: mybank-services
+                client-secret: ${KEYCLOAK_SERVICE_SECRET}
+                authorization-grant-type: client_credentials
+                scope: openid
+            provider:
+              keycloak:
+                token-uri: {{ printf "http://%s:%v/realms/%s/protocol/openid-connect/token" (include "accounts-service.keycloakHost" .) (.Values.keycloak.port | default 8080) (include "accounts-service.keycloakRealm" .) | quote }}
+                jwk-set-uri: {{ printf "http://%s:%v/realms/%s/protocol/openid-connect/certs" (include "accounts-service.keycloakHost" .) (.Values.keycloak.port | default 8080) (include "accounts-service.keycloakRealm" .) | quote }}
+    app:
+      notifications:
+        base-url: {{ printf "http://%s:%v" (include "accounts-service.gatewayHost" .) (.Values.gateway.port | default 8081) | quote }}
+      security:
+        enabled: true
+      oauth2:
+        client-registration-id: services-client
+    management:
+      endpoints:
+        web:
+          exposure:
+            include: health,info
+{{- end }}

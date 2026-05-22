@@ -1,0 +1,30 @@
+enabled: true
+
+image:
+  repository: mybank/accounts-service
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  port: 8091
+
+replicaCount: 1
+
+spring:
+  profiles: secure
+
+postgres:
+  host: ""
+  port: "5432"
+  secretName: ""
+
+gateway:
+  host: ""
+  port: 8081
+
+keycloak:
+  host: ""
+  port: 8080
+  realm: mybank
+  issuerUri: ""
+  serviceSecret: services-secret-change-me

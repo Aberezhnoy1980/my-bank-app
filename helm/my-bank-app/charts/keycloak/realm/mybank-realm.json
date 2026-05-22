@@ -1,0 +1,96 @@
+{
+  "realm": "mybank",
+  "enabled": true,
+  "sslRequired": "none",
+  "accessTokenLifespan": 300,
+  "ssoSessionMaxLifespan": 36000,
+  "clients": [
+    {
+      "clientId": "mybank-front",
+      "name": "mybank-front",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "front-secret-change-me",
+      "redirectUris": [
+        "http://localhost/*",
+        "http://localhost:8080/*",
+        "https://localhost/*"
+      ],
+      "webOrigins": [
+        "http://localhost",
+        "http://localhost:8080",
+        "https://localhost"
+      ],
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "fullScopeAllowed": true,
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "roles",
+        "profile",
+        "email",
+        "basic"
+      ],
+      "optionalClientScopes": [
+        "address",
+        "phone",
+        "offline_access",
+        "microprofile-jwt"
+      ]
+    },
+    {
+      "clientId": "mybank-services",
+      "name": "mybank-services",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "services-secret-change-me",
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "authorizationServicesEnabled": false
+    }
+  ],
+  "users": [
+    {
+      "username": "demo.user",
+      "enabled": true,
+      "email": "demo.user@example.com",
+      "firstName": "Demo",
+      "lastName": "User",
+      "emailVerified": true,
+      "requiredActions": [],
+      "realmRoles": ["default-roles-mybank", "offline_access"],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "demo",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "alice.user",
+      "enabled": true,
+      "email": "alice.user@example.com",
+      "firstName": "Alice",
+      "lastName": "User",
+      "emailVerified": true,
+      "requiredActions": [],
+      "realmRoles": ["default-roles-mybank", "offline_access"],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "alice",
+          "temporary": false
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+apiVersion: v2
+name: my-bank-app
+description: Umbrella Helm chart for the my-bank-app microservices (sprint 10)
+type: application
+version: 0.1.0
+appVersion: "0.1.0-SNAPSHOT"
+keywords:
+  - my-bank-app
+  - spring-boot
+  - microservices
+maintainers:
+  - name: my-bank-app
+
+dependencies:
+  - name: postgres
+    version: 0.1.0
+    condition: postgres.enabled
+  - name: keycloak
+    version: 0.1.0
+    condition: keycloak.enabled
+  - name: gateway
+    version: 0.1.0
+    condition: gateway.enabled
+  - name: front
+    version: 0.1.0
+    condition: front.enabled
+  - name: accounts-service
+    version: 0.1.0
+    condition: accounts-service.enabled
+  - name: cash-service
+    version: 0.1.0
+    condition: cash-service.enabled
+  - name: transfer-service
+    version: 0.1.0
+    condition: transfer-service.enabled
+  - name: notifications-service
+    version: 0.1.0
+    condition: notifications-service.enabled
+  - name: ingress
+    version: 0.1.0
+    condition: ingress.enabled

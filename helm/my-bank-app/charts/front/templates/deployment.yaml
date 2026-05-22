@@ -1,0 +1,73 @@
+{{- if .Values.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "front.fullname" . }}
+  labels:
+    {{- include "front.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "front.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "front.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: front
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy | default .Values.global.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: {{ .Values.spring.profiles | default .Values.global.spring.profiles | quote }}
+            - name: SPRING_CONFIG_IMPORT
+              value: optional:file:/config/application-k8s.yml
+            - name: SPRING_CLOUD_CONFIG_ENABLED
+              value: "false"
+            - name: EUREKA_CLIENT_ENABLED
+              value: "false"
+            - name: SPRING_CLOUD_DISCOVERY_ENABLED
+              value: "false"
+            - name: KEYCLOAK_OIDC_ISSUER_URI
+              value: {{ include "front.oidcIssuerUri" . | quote }}
+            - name: KEYCLOAK_AUTHORIZATION_URI
+              value: {{ printf "%s/realms/%s/protocol/openid-connect/auth" (include "front.publicBaseUrl" .) (include "front.keycloakRealm" .) | quote }}
+            - name: KEYCLOAK_TOKEN_URI
+              value: {{ printf "http://%s:%v/realms/%s/protocol/openid-connect/token" (include "front.keycloakHost" .) (.Values.keycloak.port | default 8080) (include "front.keycloakRealm" .) | quote }}
+            - name: KEYCLOAK_JWK_SET_URI
+              value: {{ printf "http://%s:%v/realms/%s/protocol/openid-connect/certs" (include "front.keycloakHost" .) (.Values.keycloak.port | default 8080) (include "front.keycloakRealm" .) | quote }}
+            - name: KEYCLOAK_FRONT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-oauth
+                  key: KEYCLOAK_FRONT_SECRET
+          volumeMounts:
+            - name: config
+              mountPath: /config
+              readOnly: true
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: http
+            initialDelaySeconds: 90
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 12
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: http
+            initialDelaySeconds: 180
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 6
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "front.fullname" . }}-config
+{{- end }}

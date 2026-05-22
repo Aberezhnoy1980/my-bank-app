@@ -3,29 +3,24 @@ spring:
     gateway:
       routes:
         - id: accounts-service
-          uri: lb://ACCOUNTS-SERVICE
+          uri: http://accounts-service:8091
           predicates:
             - Path=/api/accounts/**
         - id: cash-service
-          uri: lb://CASH-SERVICE
+          uri: http://cash-service:8092
           predicates:
             - Path=/api/cash/**
         - id: transfer-service
-          uri: lb://TRANSFER-SERVICE
+          uri: http://transfer-service:8093
           predicates:
             - Path=/api/transfers/**
         - id: notifications-service
-          uri: lb://NOTIFICATIONS-SERVICE
+          uri: http://notifications-service:8094
           predicates:
             - Path=/api/notifications/**
 
 server:
   port: 8081
-
-eureka:
-  client:
-    service-url:
-      defaultZone: http://localhost:8761/eureka
 
 management:
   endpoints:
