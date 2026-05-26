@@ -57,3 +57,15 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- define "accounts-service.keycloakJwkSetUri" -}}
 {{- printf "http://%s:%v/realms/%s/protocol/openid-connect/certs" (include "accounts-service.keycloakHost" .) (.Values.keycloak.port | default 8080) (include "accounts-service.keycloakRealm" .) }}
 {{- end }}
+
+{{- define "accounts-service.kafkaBootstrapServers" -}}
+{{- $svcKafka := .Values.kafka | default dict -}}
+{{- $globalKafka := .Values.global.kafka | default dict -}}
+{{- $svcKafka.bootstrapServers | default $globalKafka.bootstrapServers | default (printf "%s-kafka:9092" .Release.Name) }}
+{{- end }}
+
+{{- define "accounts-service.kafkaTopic" -}}
+{{- $svcKafka := .Values.kafka | default dict -}}
+{{- $globalKafka := .Values.global.kafka | default dict -}}
+{{- $svcKafka.topic | default $globalKafka.topic | default "bank.notifications" }}
+{{- end }}
