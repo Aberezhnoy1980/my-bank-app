@@ -4,7 +4,7 @@ import com.mybank.transfer.api.TransferRequest;
 import com.mybank.transfer.api.TransferResponse;
 import com.mybank.transfer.client.AccountProfileView;
 import com.mybank.transfer.client.AccountsClient;
-import com.mybank.transfer.client.NotificationsClient;
+import com.mybank.transfer.kafka.NotificationEventPublisher;
 import com.mybank.transfer.persistence.TransferRecordEntity;
 import com.mybank.transfer.persistence.TransferRecordRepository;
 import com.mybank.security.support.JwtUsernameResolver;
@@ -16,20 +16,20 @@ import org.springframework.stereotype.Service;
 public class TransferService {
 
     private final AccountsClient accountsClient;
-    private final NotificationsClient notificationsClient;
+    private final NotificationEventPublisher notificationEventPublisher;
     private final TransferRecordRepository transferRecordRepository;
     private final JwtUsernameResolver jwtUsernameResolver;
     private final String senderUsername;
 
     public TransferService(
             AccountsClient accountsClient,
-            NotificationsClient notificationsClient,
+            NotificationEventPublisher notificationEventPublisher,
             TransferRecordRepository transferRecordRepository,
             JwtUsernameResolver jwtUsernameResolver,
             @Value("${app.transfer.sender-username}") String senderUsername
     ) {
         this.accountsClient = accountsClient;
-        this.notificationsClient = notificationsClient;
+        this.notificationEventPublisher = notificationEventPublisher;
         this.transferRecordRepository = transferRecordRepository;
         this.jwtUsernameResolver = jwtUsernameResolver;
         this.senderUsername = senderUsername;
@@ -60,7 +60,7 @@ public class TransferService {
             accountsClient.deposit(sender, request.amount());
             throw ex;
         } finally {
-            notificationsClient.send(
+            notificationEventPublisher.send(
                     "TRANSFER_ATTEMPT",
                     "Transfer attempt from " + sender + " to " + request.recipientUsername()
             );
