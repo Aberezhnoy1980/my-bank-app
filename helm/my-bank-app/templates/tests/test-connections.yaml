@@ -41,3 +41,25 @@ spec:
         - -ec
         - curl -fsS "http://{{ .Release.Name }}-keycloak:8080/realms/{{ .Values.global.keycloak.realm }}/.well-known/openid-configuration" >/dev/null
 {{- end }}
+{{- if .Values.kafka.enabled }}
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ .Release.Name }}-test-kafka"
+  labels:
+    app.kubernetes.io/name: {{ .Chart.Name }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  restartPolicy: Never
+  containers:
+    - name: kafka
+      image: busybox:1.36
+      command:
+        - /bin/sh
+        - -ec
+        - nc -zv {{ .Release.Name }}-kafka 9092
+{{- end }}
