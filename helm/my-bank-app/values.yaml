@@ -3,6 +3,8 @@
 
 global:
   namespace: mybank
+  security:
+    allowInsecureImages: true
   # Keep global.kafka.enabled in sync with top-level kafka.enabled.
   kafka:
     enabled: true

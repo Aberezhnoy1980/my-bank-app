@@ -7,6 +7,5 @@ spring:
   config:
     activate:
       on-profile: local
-  config:
     import:
       - classpath:application-local.yml

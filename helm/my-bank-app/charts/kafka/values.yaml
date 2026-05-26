@@ -2,6 +2,9 @@
 # Override from umbrella release: kafka.kafka.*
 
 kafka:
+  image:
+    repository: bitnamilegacy/kafka
+
   kraft:
     enabled: true
 
