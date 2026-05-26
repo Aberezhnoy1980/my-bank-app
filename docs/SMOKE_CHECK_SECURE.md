@@ -24,11 +24,13 @@ Inside containers use service DNS (`http://mybank-gateway:8081`, `http://mybank-
 
 ### Kubernetes (C)
 
-1. **Pods** — `kubectl -n mybank get pods` — all **Running** / **Ready** (allow ~2–3 min after install).
+1. **Pods** — `kubectl -n mybank get pods` — all **Running** / **Ready** (allow ~2–3 min after install; Kafka controller/broker may need extra time on first start).
 2. **OIDC** — `curl -fsS http://localhost/realms/mybank/.well-known/openid-configuration | head -c 120` — HTTP 200.
-3. **API smoke** — token + Gateway via Ingress (below).
-4. **UI** — `http://localhost/` only (not `127.0.0.1`, not `:8080` unless port-forward) — login `demo.user` / `demo`; profile, deposit, withdraw, transfer to `alice.user`.
-5. **Refresh (optional)** — wait longer than access token TTL (realm default 300s), reload UI — session should refresh without Keycloak login form.
+3. **Kafka (Helm test)** — `helm test mybank -n mybank` — hook `mybank-test-kafka` checks TCP `mybank-kafka:9092`.
+4. **API smoke** — token + Gateway via Ingress (below).
+5. **UI** — `http://localhost/` only (not `127.0.0.1`, not `:8080` unless port-forward) — login `demo.user` / `demo`; profile, deposit, withdraw, transfer to `alice.user`.
+6. **Notifications via Kafka** — after deposit/transfer, logs: `kubectl -n mybank logs deploy/mybank-notifications-service --tail=50 | grep "Notification persisted"`; or DB: `kubectl -n mybank exec -it statefulset/mybank-postgres -- psql -U mybank -d mybank -c "SELECT id, event_type, message FROM notifications.notification_event ORDER BY id DESC LIMIT 5;"`.
+7. **Refresh (optional)** — wait longer than access token TTL (realm default 300s), reload UI — session should refresh without Keycloak login form.
 
 ### Token for curl (password grant)
 
@@ -78,6 +80,8 @@ helm test mybank -n mybank
 | **K8s:** `401` on `/api/accounts/me` with valid token; UI «Accounts service is unavailable» | JWT **`issuer-uri`** is public (`http://localhost/realms/mybank`), but pods cannot load JWKS from that URL. Set **`spring.security.oauth2.resourceserver.jwt.jwk-set-uri`** to in-cluster Keycloak (`http://mybank-keycloak:8080/realms/mybank/protocol/openid-connect/certs`) on **gateway** and all JWT resource servers — see Helm ConfigMaps. Symptom: Gateway may authorize the request, downstream still returns 401. |
 | **K8s:** `[authorization_request_not_found]` or redirect loop in browser | Open **`http://localhost/`** explicitly (typing `localhost` alone may use `https://` via HSTS — another cookie jar). Clear site data for localhost. Chart sets fixed `redirect-uri` and `forward-headers-strategy`. After a failed login, do not edit `/login?error` manually — log out or clear cookies and retry. |
 | **K8s:** `ImagePullBackOff` | Build and tag `mybank/<module>:latest` locally (see README) |
+| **K8s:** no notification rows after UI ops | Kafka pods not Ready; check `kubectl -n mybank get pods -l app.kubernetes.io/name=kafka`; producer logs in accounts/cash/transfer; topic `bank.notifications` (auto-create enabled in chart) |
+| **Helm:** missing `kafka-*.tgz` | Run `helm dependency update` inside `helm/my-bank-app/charts/kafka` (OCI pull to Bitnami), then commit vendored chart |
 | **K8s:** CrashLoop / probe failures right after install | JVM warm-up; chart uses higher `initialDelaySeconds` on readiness/liveness — wait or `kubectl logs` |
 | **Helm:** white screen / no Keycloak on `/` | `helm upgrade --reset-values` if subcharts were previously disabled with `--set ...=false` |
 
