@@ -14,9 +14,12 @@ spring:
     change-log: classpath:db/changelog/db.changelog-master.yaml
     default-schema: notifications
     liquibase-schema: public
-
 server:
   port: 8094
+
+app:
+  kafka:
+    topic: ${APP_KAFKA_TOPIC:bank.notifications}
 
 management:
   endpoints:
