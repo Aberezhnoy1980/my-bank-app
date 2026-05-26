@@ -1,6 +1,6 @@
 apiVersion: v2
 name: my-bank-app
-description: Umbrella Helm chart for the my-bank-app microservices (sprint 10)
+description: Umbrella Helm chart for the my-bank-app microservices (sprint 10–11)
 type: application
 version: 0.1.0
 appVersion: "0.1.0-SNAPSHOT"
@@ -12,6 +12,9 @@ maintainers:
   - name: my-bank-app
 
 dependencies:
+  - name: kafka
+    version: 0.1.0
+    condition: kafka.enabled
   - name: postgres
     version: 0.1.0
     condition: postgres.enabled

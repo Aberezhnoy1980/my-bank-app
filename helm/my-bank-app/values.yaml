@@ -3,6 +3,8 @@
 
 global:
   namespace: mybank
+  kafka:
+    topic: bank.notifications
   image:
     # Local images built via docker/Dockerfile.module (see README).
     pullPolicy: IfNotPresent
@@ -15,6 +17,9 @@ global:
     issuerUri: http://localhost/realms/mybank
     serviceSecret: services-secret-change-me
     frontSecret: front-secret-change-me
+
+kafka:
+  enabled: true
 
 postgres:
   enabled: true
