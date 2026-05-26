@@ -27,24 +27,6 @@ data:
         change-log: classpath:db/changelog/db.changelog-master.yaml
         default-schema: notifications
         liquibase-schema: public
-      security:
-        oauth2:
-          resourceserver:
-            jwt:
-              issuer-uri: {{ include "notifications-service.keycloakIssuerUri" . | quote }}
-              jwk-set-uri: {{ include "notifications-service.keycloakJwkSetUri" . | quote }}
-          client:
-            registration:
-              services-client:
-                provider: keycloak
-                client-id: mybank-services
-                client-secret: ${KEYCLOAK_SERVICE_SECRET}
-                authorization-grant-type: client_credentials
-                scope: openid
-            provider:
-              keycloak:
-                token-uri: {{ printf "http://%s:%v/realms/%s/protocol/openid-connect/token" (include "notifications-service.keycloakHost" .) (.Values.keycloak.port | default 8080) (include "notifications-service.keycloakRealm" .) | quote }}
-                jwk-set-uri: {{ printf "http://%s:%v/realms/%s/protocol/openid-connect/certs" (include "notifications-service.keycloakHost" .) (.Values.keycloak.port | default 8080) (include "notifications-service.keycloakRealm" .) | quote }}
       {{- if .Values.global.kafka.enabled | default true }}
       kafka:
         bootstrap-servers: {{ include "notifications-service.kafkaBootstrapServers" . | quote }}
@@ -63,9 +45,7 @@ data:
         topic: {{ include "notifications-service.kafkaTopic" . | quote }}
       {{- end }}
       security:
-        enabled: true
-      oauth2:
-        client-registration-id: services-client
+        enabled: false
     management:
       endpoints:
         web:

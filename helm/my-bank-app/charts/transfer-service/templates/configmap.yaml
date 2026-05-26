@@ -61,8 +61,6 @@ data:
       kafka:
         topic: {{ include "transfer-service.kafkaTopic" . | quote }}
       {{- end }}
-      notifications:
-        base-url: {{ printf "http://%s:%v" (include "transfer-service.gatewayHost" .) (.Values.gateway.port | default 8081) | quote }}
       transfer:
         sender-username: demo.user
       security:

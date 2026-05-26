@@ -61,8 +61,6 @@ data:
       {{- end }}
       accounts:
         base-url: {{ printf "http://%s:%v" (include "cash-service.gatewayHost" .) (.Values.gateway.port | default 8081) | quote }}
-      notifications:
-        base-url: {{ printf "http://%s:%v" (include "cash-service.gatewayHost" .) (.Values.gateway.port | default 8081) | quote }}
       cash:
         fallback-username: demo.user
       security:

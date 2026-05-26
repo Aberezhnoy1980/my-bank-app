@@ -14,10 +14,6 @@ spring:
           uri: lb://TRANSFER-SERVICE
           predicates:
             - Path=/api/transfers/**
-        - id: notifications-service
-          uri: lb://NOTIFICATIONS-SERVICE
-          predicates:
-            - Path=/api/notifications/**
 
 server:
   port: 8081

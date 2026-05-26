@@ -23,8 +23,6 @@ app:
     topic: ${APP_KAFKA_TOPIC:bank.notifications}
   accounts:
     base-url: ${APP_ACCOUNTS_BASE_URL:http://localhost:8081}
-  notifications:
-    base-url: ${APP_NOTIFICATIONS_BASE_URL:http://localhost:8081}
   transfer:
     sender-username: demo.user
 

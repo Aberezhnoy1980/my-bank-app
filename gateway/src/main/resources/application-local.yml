@@ -14,10 +14,6 @@ spring:
           uri: http://transfer-service:8093
           predicates:
             - Path=/api/transfers/**
-        - id: notifications-service
-          uri: http://notifications-service:8094
-          predicates:
-            - Path=/api/notifications/**
 
 server:
   port: 8081

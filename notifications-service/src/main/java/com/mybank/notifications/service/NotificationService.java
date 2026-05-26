@@ -1,8 +1,6 @@
 package com.mybank.notifications.service;
 
 import com.mybank.notification.events.NotificationEvent;
-import com.mybank.notifications.api.NotificationRequest;
-import com.mybank.notifications.api.NotificationResponse;
 import com.mybank.notifications.persistence.NotificationEventEntity;
 import com.mybank.notifications.persistence.NotificationEventRepository;
 import jakarta.validation.Valid;
@@ -22,12 +20,6 @@ public class NotificationService {
 
     public NotificationService(NotificationEventRepository notificationEventRepository) {
         this.notificationEventRepository = notificationEventRepository;
-    }
-
-    @Transactional
-    public NotificationResponse accept(NotificationRequest request) {
-        persist(new NotificationEvent(request.eventType(), request.message()));
-        return new NotificationResponse("NOTIFICATION_ACCEPTED");
     }
 
     @Transactional
