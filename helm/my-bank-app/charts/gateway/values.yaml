@@ -34,7 +34,3 @@ routes:
     service: transfer-service
     port: 8093
     path: /api/transfers/**
-  - id: notifications-service
-    service: notifications-service
-    port: 8094
-    path: /api/notifications/**

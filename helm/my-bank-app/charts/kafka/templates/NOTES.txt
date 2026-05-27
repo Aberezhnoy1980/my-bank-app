@@ -1,0 +1,3 @@
+Kafka bootstrap (in-cluster): {{ include "kafka.bootstrapServers" . }}
+
+Topic for notifications (application): bank.notifications

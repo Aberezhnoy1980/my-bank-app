@@ -40,11 +40,6 @@ spec:
               value: {{ include "accounts-service.postgresHost" . | quote }}
             - name: POSTGRES_PORT
               value: {{ .Values.postgres.port | quote }}
-            - name: KEYCLOAK_SERVICE_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Release.Name }}-oauth
-                  key: KEYCLOAK_SERVICE_SECRET
           volumeMounts:
             - name: config
               mountPath: /config

@@ -33,25 +33,22 @@ data:
             jwt:
               issuer-uri: {{ include "accounts-service.keycloakIssuerUri" . | quote }}
               jwk-set-uri: {{ include "accounts-service.keycloakJwkSetUri" . | quote }}
-          client:
-            registration:
-              services-client:
-                provider: keycloak
-                client-id: mybank-services
-                client-secret: ${KEYCLOAK_SERVICE_SECRET}
-                authorization-grant-type: client_credentials
-                scope: openid
-            provider:
-              keycloak:
-                token-uri: {{ printf "http://%s:%v/realms/%s/protocol/openid-connect/token" (include "accounts-service.keycloakHost" .) (.Values.keycloak.port | default 8080) (include "accounts-service.keycloakRealm" .) | quote }}
-                jwk-set-uri: {{ printf "http://%s:%v/realms/%s/protocol/openid-connect/certs" (include "accounts-service.keycloakHost" .) (.Values.keycloak.port | default 8080) (include "accounts-service.keycloakRealm" .) | quote }}
+      {{- if .Values.global.kafka.enabled | default true }}
+      kafka:
+        bootstrap-servers: {{ include "accounts-service.kafkaBootstrapServers" . | quote }}
+        producer:
+          acks: all
+          retries: 3
+          key-serializer: org.apache.kafka.common.serialization.StringSerializer
+          value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      {{- end }}
     app:
-      notifications:
-        base-url: {{ printf "http://%s:%v" (include "accounts-service.gatewayHost" .) (.Values.gateway.port | default 8081) | quote }}
+      {{- if .Values.global.kafka.enabled | default true }}
+      kafka:
+        topic: {{ include "accounts-service.kafkaTopic" . | quote }}
+      {{- end }}
       security:
         enabled: true
-      oauth2:
-        client-registration-id: services-client
     management:
       endpoints:
         web:

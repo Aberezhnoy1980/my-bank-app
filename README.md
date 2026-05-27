@@ -12,6 +12,7 @@
 ![Docker Compose](https://img.shields.io/badge/Docker%20Compose-sprint%209-2496ED)
 ![Kubernetes](https://img.shields.io/badge/Kubernetes-sprint%2010-326CE5)
 ![Helm](https://img.shields.io/badge/Helm-umbrella%20chart-0F1689)
+![Apache Kafka](https://img.shields.io/badge/Apache%20Kafka-sprint%2011-231F20)
 ![Spring Cloud Gateway](https://img.shields.io/badge/Spring%20Cloud%20Gateway-API-6DB33F)
 ![Spring Cloud Contract](https://img.shields.io/badge/Spring%20Cloud%20Contract-4.1-0A2540)
 
@@ -20,7 +21,7 @@
 ![Thymeleaf](https://img.shields.io/badge/Thymeleaf-UI-005F0F)
 ![JUnit 5](https://img.shields.io/badge/JUnit-5-25A162)
 
-Учебный микросервисный проект банка (**module 3**, Yandex Practicum; **sprint 9** — Docker Compose / Eureka / Config Server; **sprint 10** — Kubernetes / Helm).
+Учебный микросервисный проект банка (**module 3**, Yandex Practicum; **sprint 9** — Docker Compose / Eureka / Config Server; **sprint 10** — Kubernetes / Helm; **sprint 11** — Apache Kafka).
 
 ![Схема взаимодействия сервисов](./docs/img/Image.png)
 
@@ -39,7 +40,8 @@
 - **Runtime:** Java 21  
 - **Framework:** Spring Boot, Spring Cloud  
 - **Данные:** PostgreSQL, одна БД `mybank`, изоляция по **schema per service** для модулей с персистентностью: `accounts`, `notifications`, `cash`, `transfer`; миграции **Liquibase**  
-- **Безопасность:** OAuth2 (Authorization Code для браузера, Client Credentials между сервисами), Keycloak в профиле `secure`  
+- **События:** Apache Kafka (топик `bank.notifications`, JSON `eventType` + `message`); producers — Accounts / Cash / Transfer, consumer — Notifications  
+- **Безопасность:** OAuth2 (Authorization Code для браузера, Client Credentials для вызовов Accounts из Cash/Transfer), Keycloak в профиле `secure`  
 - **Контракты:** Spring Cloud Contract — producer `accounts-service`, consumers `cash-service` и `transfer-service` (проверка против stubs)  
 - **Отказоустойчивость:** Resilience4j Circuit Breaker + Retry на вызовах **Accounts** из **cash-service** / **transfer-service**  
 - **Контейнеризация:** Docker, Docker Compose; **оркестрация (sprint 10):** Kubernetes, Helm (`helm/my-bank-app`)  
@@ -66,6 +68,8 @@
 Реализованы микросервисы и Gateway, профиль **`secure`** с Keycloak/JWT, персистентность для перечисленных schema, контрактные тесты Cash/Transfer → Accounts (Spring Cloud Contract).
 
 **Sprint 10:** деплой в локальный Kubernetes (Rancher Desktop / k3s) через umbrella-чарт Helm; runtime-конфигурация в ConfigMap/Secret (Eureka и Config Server **не** входят в K8s-контур). Подробности — раздел [Kubernetes (Helm)](#kubernetes-helm) и **[docs/SMOKE_CHECK_SECURE.md](docs/SMOKE_CHECK_SECURE.md)** (режим C).
+
+**Sprint 11:** уведомления через **Kafka** (не REST); в кластере — сабчарт Bitnami Kafka (`helm/my-bank-app/charts/kafka`, KRaft, PVC). Перед первым `helm upgrade` один раз подтянуть зависимости Bitnami: `cd helm/my-bank-app/charts/kafka && helm dependency update` (нужен доступ к `oci://registry-1.docker.io/bitnamicharts`).
 
 ## Запуск без Docker (локальная разработка)
 
@@ -184,7 +188,8 @@ kubectl delete namespace mybank
 | `/api/accounts/**` | accounts-service |
 | `/api/cash/**` | cash-service |
 | `/api/transfers/**` | transfer-service |
-| `/api/notifications/**` | notifications-service |
+
+Уведомления **не** проксируются через Gateway: события публикуются в Kafka (`bank.notifications`), **notifications-service** потребляет их асинхронно. HTTP у Notifications — только **Actuator** (`/actuator/health`) для probes.
 
 UI: **Docker Compose** — `http://localhost:8080`; **Kubernetes (Ingress)** — `http://localhost/`. HTTP-клиенты к API: Compose — Gateway **8081**; K8s — `http://localhost/api/...` через Ingress.
 
@@ -202,7 +207,7 @@ UI: **Docker Compose** — `http://localhost:8080`; **Kubernetes (Ingress)** —
 | Client ID | Назначение | Secret (значение по умолчанию в YAML) |
 | --------- | ---------- | --------------------------------------- |
 | `mybank-front` | браузерный логин (`authorization_code`) на Front | `front-secret-change-me` |
-| `mybank-services` | `client_credentials` между микросервисами | `services-secret-change-me` |
+| `mybank-services` | `client_credentials` (Cash/Transfer → Accounts через Gateway) | `services-secret-change-me` |
 
 Пользователи realm, согласованные с демо-данными: `demo.user` / `demo`, `alice.user` / `alice`.
 
@@ -228,7 +233,6 @@ curl -s -X POST http://localhost:8081/api/cash/deposit \
 curl -s -X POST http://localhost:8081/api/transfers \
   -H "Content-Type: application/json" \
   -d '{"recipientUsername":"alice.user","amount":50.00}'
-curl -s -X POST http://localhost:8081/api/notifications \
-  -H "Content-Type: application/json" \
-  -d '{"eventType":"MANUAL_TEST","message":"hello"}'
 ```
+
+После deposit/transfer проверьте логи **notifications-service** или таблицу `notifications.notification_event` — событие должно появиться через Kafka (в K8s — см. smoke в **[docs/SMOKE_CHECK_SECURE.md](docs/SMOKE_CHECK_SECURE.md)**).

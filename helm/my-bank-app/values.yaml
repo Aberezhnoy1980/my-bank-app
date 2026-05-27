@@ -3,6 +3,13 @@
 
 global:
   namespace: mybank
+  security:
+    allowInsecureImages: true
+  # Keep global.kafka.enabled in sync with top-level kafka.enabled.
+  kafka:
+    enabled: true
+    topic: bank.notifications
+    bootstrapServers: ""
   image:
     # Local images built via docker/Dockerfile.module (see README).
     pullPolicy: IfNotPresent
@@ -15,6 +22,9 @@ global:
     issuerUri: http://localhost/realms/mybank
     serviceSecret: services-secret-change-me
     frontSecret: front-secret-change-me
+
+kafka:
+  enabled: true
 
 postgres:
   enabled: true

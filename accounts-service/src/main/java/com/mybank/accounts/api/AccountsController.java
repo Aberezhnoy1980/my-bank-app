@@ -1,6 +1,6 @@
 package com.mybank.accounts.api;
 
-import com.mybank.accounts.client.NotificationsClient;
+import com.mybank.accounts.kafka.NotificationEventPublisher;
 import com.mybank.accounts.domain.AccountProfile;
 import com.mybank.accounts.service.AccountProfileService;
 import jakarta.validation.Valid;
@@ -16,14 +16,14 @@ import org.springframework.web.bind.annotation.RestController;
 public class AccountsController {
 
     private final AccountProfileService accountProfileService;
-    private final NotificationsClient notificationsClient;
+    private final NotificationEventPublisher notificationEventPublisher;
 
     public AccountsController(
             AccountProfileService accountProfileService,
-            NotificationsClient notificationsClient
+            NotificationEventPublisher notificationEventPublisher
     ) {
         this.accountProfileService = accountProfileService;
-        this.notificationsClient = notificationsClient;
+        this.notificationEventPublisher = notificationEventPublisher;
     }
 
     @GetMapping("/me")
@@ -34,7 +34,7 @@ public class AccountsController {
     @PutMapping("/me")
     public AccountProfileResponse updateCurrentAccount(@Valid @RequestBody UpdateAccountProfileRequest request) {
         AccountProfileResponse response = toResponse(accountProfileService.updateCurrentAccount(request));
-        notificationsClient.send("ACCOUNT_PROFILE_UPDATED", "Profile updated for " + response.username());
+        notificationEventPublisher.send("ACCOUNT_PROFILE_UPDATED", "Profile updated for " + response.username());
         return response;
     }
 
@@ -46,7 +46,7 @@ public class AccountsController {
         } else {
             response = toResponse(accountProfileService.withdraw(request.amount()));
         }
-        notificationsClient.send("ACCOUNT_BALANCE_UPDATED", "Balance updated for " + response.username());
+        notificationEventPublisher.send("ACCOUNT_BALANCE_UPDATED", "Balance updated for " + response.username());
         return response;
     }
 
@@ -66,7 +66,7 @@ public class AccountsController {
         } else {
             response = toResponse(accountProfileService.withdrawByUsername(username, request.amount()));
         }
-        notificationsClient.send("ACCOUNT_BALANCE_UPDATED", "Balance updated for " + response.username());
+        notificationEventPublisher.send("ACCOUNT_BALANCE_UPDATED", "Balance updated for " + response.username());
         return response;
     }
 

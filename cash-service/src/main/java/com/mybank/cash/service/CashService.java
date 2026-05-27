@@ -3,7 +3,7 @@ package com.mybank.cash.service;
 import com.mybank.cash.api.CashOperationResponse;
 import com.mybank.cash.client.AccountProfileView;
 import com.mybank.cash.client.AccountsClient;
-import com.mybank.cash.client.NotificationsClient;
+import com.mybank.cash.kafka.NotificationEventPublisher;
 import com.mybank.cash.persistence.CashOperationEntity;
 import com.mybank.cash.persistence.CashOperationRepository;
 import com.mybank.cash.persistence.CashOperationType;
@@ -16,20 +16,20 @@ import org.springframework.stereotype.Service;
 public class CashService {
 
     private final AccountsClient accountsClient;
-    private final NotificationsClient notificationsClient;
+    private final NotificationEventPublisher notificationEventPublisher;
     private final CashOperationRepository cashOperationRepository;
     private final JwtUsernameResolver jwtUsernameResolver;
     private final String fallbackUsername;
 
     public CashService(
             AccountsClient accountsClient,
-            NotificationsClient notificationsClient,
+            NotificationEventPublisher notificationEventPublisher,
             CashOperationRepository cashOperationRepository,
             JwtUsernameResolver jwtUsernameResolver,
             @Value("${app.cash.fallback-username}") String fallbackUsername
     ) {
         this.accountsClient = accountsClient;
-        this.notificationsClient = notificationsClient;
+        this.notificationEventPublisher = notificationEventPublisher;
         this.cashOperationRepository = cashOperationRepository;
         this.jwtUsernameResolver = jwtUsernameResolver;
         this.fallbackUsername = fallbackUsername;
@@ -39,7 +39,7 @@ public class CashService {
         String username = jwtUsernameResolver.resolve(fallbackUsername);
         AccountProfileView profile = accountsClient.deposit(amount);
         cashOperationRepository.save(new CashOperationEntity(username, CashOperationType.DEPOSIT, amount));
-        notificationsClient.send("CASH_DEPOSIT", "Deposit completed for " + username + " amount " + amount);
+        notificationEventPublisher.send("CASH_DEPOSIT", "Deposit completed for " + username + " amount " + amount);
         return new CashOperationResponse("DEPOSIT_SUCCESS", profile.balance());
     }
 
@@ -47,7 +47,7 @@ public class CashService {
         String username = jwtUsernameResolver.resolve(fallbackUsername);
         AccountProfileView profile = accountsClient.withdraw(amount);
         cashOperationRepository.save(new CashOperationEntity(username, CashOperationType.WITHDRAW, amount));
-        notificationsClient.send("CASH_WITHDRAW", "Withdraw completed for " + username + " amount " + amount);
+        notificationEventPublisher.send("CASH_WITHDRAW", "Withdraw completed for " + username + " amount " + amount);
         return new CashOperationResponse("WITHDRAW_SUCCESS", profile.balance());
     }
 }

@@ -1,4 +1,7 @@
 dependencies:
+- name: kafka
+  repository: ""
+  version: 0.1.0
 - name: postgres
   repository: ""
   version: 0.1.0
@@ -26,5 +29,5 @@ dependencies:
 - name: ingress
   repository: ""
   version: 0.1.0
-digest: sha256:e8c377f7ec8bf642a0d57207b5bbc62d075c4b2bffcd02a32388ada880724762
-generated: "2026-05-19T17:59:22.900596+03:00"
+digest: sha256:68efbab22eb39dc725d0b5e0ddaf570a34f478c31a48a479aef5bf5b1ebb1e80
+generated: "2026-05-26T13:42:41.386067+03:00"

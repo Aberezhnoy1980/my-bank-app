@@ -19,8 +19,8 @@ server:
   port: 8091
 
 app:
-  notifications:
-    base-url: ${APP_NOTIFICATIONS_BASE_URL:http://localhost:8081}
+  kafka:
+    topic: ${APP_KAFKA_TOPIC:bank.notifications}
 
 management:
   endpoints:
@@ -38,20 +38,6 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8090/realms/mybank}
-      client:
-        registration:
-          services-client:
-            provider: keycloak
-            client-id: mybank-services
-            client-secret: ${KEYCLOAK_SERVICE_SECRET:services-secret-change-me}
-            authorization-grant-type: client_credentials
-            scope: openid
-        provider:
-          keycloak:
-            token-uri: ${KEYCLOAK_TOKEN_URI:http://localhost:8090/realms/mybank/protocol/openid-connect/token}
-            jwk-set-uri: ${KEYCLOAK_JWK_SET_URI:http://localhost:8090/realms/mybank/protocol/openid-connect/certs}
 app:
   security:
     enabled: true
-  oauth2:
-    client-registration-id: services-client

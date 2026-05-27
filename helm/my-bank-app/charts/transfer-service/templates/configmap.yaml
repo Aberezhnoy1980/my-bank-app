@@ -45,11 +45,22 @@ data:
               keycloak:
                 token-uri: {{ printf "http://%s:%v/realms/%s/protocol/openid-connect/token" (include "transfer-service.keycloakHost" .) (.Values.keycloak.port | default 8080) (include "transfer-service.keycloakRealm" .) | quote }}
                 jwk-set-uri: {{ printf "http://%s:%v/realms/%s/protocol/openid-connect/certs" (include "transfer-service.keycloakHost" .) (.Values.keycloak.port | default 8080) (include "transfer-service.keycloakRealm" .) | quote }}
+      {{- if .Values.global.kafka.enabled | default true }}
+      kafka:
+        bootstrap-servers: {{ include "transfer-service.kafkaBootstrapServers" . | quote }}
+        producer:
+          acks: all
+          retries: 3
+          key-serializer: org.apache.kafka.common.serialization.StringSerializer
+          value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      {{- end }}
     app:
       accounts:
         base-url: {{ printf "http://%s:%v" (include "transfer-service.gatewayHost" .) (.Values.gateway.port | default 8081) | quote }}
-      notifications:
-        base-url: {{ printf "http://%s:%v" (include "transfer-service.gatewayHost" .) (.Values.gateway.port | default 8081) | quote }}
+      {{- if .Values.global.kafka.enabled | default true }}
+      kafka:
+        topic: {{ include "transfer-service.kafkaTopic" . | quote }}
+      {{- end }}
       transfer:
         sender-username: demo.user
       security:

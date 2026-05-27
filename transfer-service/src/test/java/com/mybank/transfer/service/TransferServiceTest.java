@@ -11,7 +11,7 @@ import com.mybank.transfer.api.TransferRequest;
 import com.mybank.transfer.api.TransferResponse;
 import com.mybank.transfer.client.AccountProfileView;
 import com.mybank.transfer.client.AccountsClient;
-import com.mybank.transfer.client.NotificationsClient;
+import com.mybank.transfer.kafka.NotificationEventPublisher;
 import com.mybank.transfer.persistence.TransferRecordEntity;
 import com.mybank.transfer.persistence.TransferRecordRepository;
 import com.mybank.security.support.JwtUsernameResolver;
@@ -25,7 +25,7 @@ import org.mockito.Mockito;
 class TransferServiceTest {
 
     private AccountsClient accountsClient;
-    private NotificationsClient notificationsClient;
+    private NotificationEventPublisher notificationEventPublisher;
     private TransferRecordRepository transferRecordRepository;
     private JwtUsernameResolver jwtUsernameResolver;
     private TransferService transferService;
@@ -33,13 +33,13 @@ class TransferServiceTest {
     @BeforeEach
     void setUp() {
         accountsClient = Mockito.mock(AccountsClient.class);
-        notificationsClient = Mockito.mock(NotificationsClient.class);
+        notificationEventPublisher = Mockito.mock(NotificationEventPublisher.class);
         transferRecordRepository = Mockito.mock(TransferRecordRepository.class);
         jwtUsernameResolver = Mockito.mock(JwtUsernameResolver.class);
         when(jwtUsernameResolver.resolve("demo.user")).thenReturn("demo.user");
         transferService = new TransferService(
                 accountsClient,
-                notificationsClient,
+                notificationEventPublisher,
                 transferRecordRepository,
                 jwtUsernameResolver,
                 "demo.user"
