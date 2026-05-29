@@ -1,9 +1,1 @@
-global:
-  scrape_interval: 15s
-  evaluation_interval: 15s
-
-scrape_configs:
-  - job_name: prometheus
-    static_configs:
-      - targets:
-          - localhost:9090
+# Reference copy; runtime config is rendered from prometheus/templates/configmap.yaml (Helm).
