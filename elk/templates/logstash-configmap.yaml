@@ -1,0 +1,12 @@
+{{- if .Values.enabled }}
+{{- $pipeline := .Files.Get "config/logstash/pipeline.conf" | replace "ELASTICSEARCH_HOST" (include "elk.elasticsearchFullname" .) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "elk.logstashConfigMapName" . }}
+  labels:
+    {{- include "elk.labels" . | nindent 4 }}
+data:
+  pipeline.conf: |
+{{ $pipeline | indent 4 }}
+{{- end }}

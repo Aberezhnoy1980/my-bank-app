@@ -1,0 +1,49 @@
+{{- if .Values.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "elk.kibanaFullname" . }}
+  labels:
+    {{- include "elk.labels" . | nindent 4 }}
+    app.kubernetes.io/component: kibana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "elk.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: kibana
+  template:
+    metadata:
+      labels:
+        {{- include "elk.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: kibana
+    spec:
+      containers:
+        - name: kibana
+          image: "{{ .Values.image.kibana.repository }}:{{ .Values.image.kibana.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.kibana.service.port }}
+          env:
+            - name: ELASTICSEARCH_HOSTS
+              value: "http://{{ include "elk.elasticsearchFullname" . }}:{{ .Values.elasticsearch.service.port }}"
+            - name: SERVER_BASEPATH
+              value: "/kibana"
+            - name: SERVER_REWRITE_BASE_PATH
+              value: "true"
+          readinessProbe:
+            httpGet:
+              path: /kibana/api/status
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /kibana/api/status
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 15
+          resources:
+            {{- toYaml .Values.kibana.resources | nindent 12 }}
+{{- end }}

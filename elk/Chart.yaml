@@ -1,0 +1,6 @@
+apiVersion: v2
+name: elk
+description: Elasticsearch, Logstash and Kibana for my-bank-app (sprint 12)
+type: application
+version: 0.1.0
+appVersion: "8.15"

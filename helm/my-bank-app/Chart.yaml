@@ -1,6 +1,6 @@
 apiVersion: v2
 name: my-bank-app
-description: Umbrella Helm chart for the my-bank-app microservices (sprint 10–11)
+description: Umbrella Helm chart for the my-bank-app microservices (sprint 10–12)
 type: application
 version: 0.1.0
 appVersion: "0.1.0-SNAPSHOT"
@@ -42,3 +42,19 @@ dependencies:
   - name: ingress
     version: 0.1.0
     condition: ingress.enabled
+  - name: zipkin
+    version: 0.1.0
+    repository: "file://../../zipkin"
+    condition: zipkin.enabled
+  - name: prometheus
+    version: 0.1.0
+    repository: "file://../../prometheus"
+    condition: prometheus.enabled
+  - name: grafana
+    version: 0.1.0
+    repository: "file://../../grafana"
+    condition: grafana.enabled
+  - name: elk
+    version: 0.1.0
+    repository: "file://../../elk"
+    condition: elk.enabled

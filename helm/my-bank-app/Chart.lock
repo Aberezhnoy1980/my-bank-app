@@ -29,5 +29,17 @@ dependencies:
 - name: ingress
   repository: ""
   version: 0.1.0
-digest: sha256:68efbab22eb39dc725d0b5e0ddaf570a34f478c31a48a479aef5bf5b1ebb1e80
-generated: "2026-05-26T13:42:41.386067+03:00"
+- name: zipkin
+  repository: file://../../zipkin
+  version: 0.1.0
+- name: prometheus
+  repository: file://../../prometheus
+  version: 0.1.0
+- name: grafana
+  repository: file://../../grafana
+  version: 0.1.0
+- name: elk
+  repository: file://../../elk
+  version: 0.1.0
+digest: sha256:bc5b0e79e5b94587bf885770a621c6bd6d07aa3856fc7a37b179cd00a5c95c8c
+generated: "2026-05-29T23:09:36.148124+03:00"
