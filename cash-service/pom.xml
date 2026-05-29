@@ -53,6 +53,11 @@
         </dependency>
         <dependency>
             <groupId>com.mybank</groupId>
+            <artifactId>observability-support</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.mybank</groupId>
             <artifactId>notification-events</artifactId>
             <version>${project.version}</version>
         </dependency>

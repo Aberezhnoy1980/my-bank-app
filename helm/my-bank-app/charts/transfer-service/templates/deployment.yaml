@@ -28,6 +28,12 @@ spec:
           env:
             - name: SPRING_PROFILES_ACTIVE
               value: {{ .Values.spring.profiles | default .Values.global.spring.profiles | quote }}
+            {{- if .Values.global.zipkin.enabled | default true }}
+            - name: ZIPKIN_ENDPOINT
+              value: {{ .Values.global.zipkin.endpoint | default (printf "http://%s-zipkin:9411/api/v2/spans" .Release.Name) | quote }}
+            - name: MANAGEMENT_TRACING_SAMPLING_PROBABILITY
+              value: "1.0"
+            {{- end }}
             - name: SPRING_CONFIG_IMPORT
               value: optional:file:/config/application-k8s.yml
             - name: SPRING_CLOUD_CONFIG_ENABLED

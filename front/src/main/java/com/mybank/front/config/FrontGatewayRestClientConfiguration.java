@@ -18,11 +18,12 @@ public class FrontGatewayRestClientConfiguration {
 
     @Bean
     RestClient gatewayRestClient(
+            RestClient.Builder restClientBuilder,
             @Value("${app.gateway.base-url}") String baseUrl,
             ObjectProvider<OAuth2AuthorizedClientManager> authorizedClientManagerProvider,
             @Value("${app.oauth2.login-registration-id:keycloak}") String registrationId
     ) {
-        RestClient.Builder builder = RestClient.builder().baseUrl(baseUrl);
+        RestClient.Builder builder = restClientBuilder.baseUrl(baseUrl);
         authorizedClientManagerProvider.ifAvailable(manager ->
                 builder.requestInterceptor(new OAuth2LoginAccessTokenInterceptor(manager, registrationId)));
         return builder.build();
