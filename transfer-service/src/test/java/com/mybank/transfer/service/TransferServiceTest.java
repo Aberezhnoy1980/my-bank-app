@@ -14,7 +14,9 @@ import com.mybank.transfer.client.AccountsClient;
 import com.mybank.transfer.kafka.NotificationEventPublisher;
 import com.mybank.transfer.persistence.TransferRecordEntity;
 import com.mybank.transfer.persistence.TransferRecordRepository;
+import com.mybank.observability.BusinessMetrics;
 import com.mybank.security.support.JwtUsernameResolver;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import org.junit.jupiter.api.BeforeEach;
@@ -42,6 +44,7 @@ class TransferServiceTest {
                 notificationEventPublisher,
                 transferRecordRepository,
                 jwtUsernameResolver,
+                new BusinessMetrics(new SimpleMeterRegistry()),
                 "demo.user"
         );
     }
