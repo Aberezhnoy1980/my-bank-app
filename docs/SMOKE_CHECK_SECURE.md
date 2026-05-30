@@ -31,6 +31,7 @@ Inside containers use service DNS (`http://mybank-gateway:8081`, `http://mybank-
 5. **UI** — `http://localhost/` only (not `127.0.0.1`, not `:8080` unless port-forward) — login `demo.user` / `demo`; profile, deposit, withdraw, transfer to `alice.user`.
 6. **Notifications via Kafka** — after deposit/transfer, logs: `kubectl -n mybank logs deploy/mybank-notifications-service --tail=50 | grep "Notification persisted"`; or DB: `kubectl -n mybank exec -it statefulset/mybank-postgres -- psql -U mybank -d mybank -c "SELECT id, event_type, message FROM notifications.notification_event ORDER BY id DESC LIMIT 5;"`.
 7. **Refresh (optional)** — wait longer than access token TTL (realm default 300s), reload UI — session should refresh without Keycloak login form.
+8. **Observability (sprint 12)** — Zipkin traces, Prometheus targets, Grafana dashboards, Kibana logs — **[SMOKE_OBSERVABILITY.md](SMOKE_OBSERVABILITY.md)**.
 
 ### Token for curl (password grant)
 

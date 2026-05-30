@@ -13,6 +13,10 @@
 ![Kubernetes](https://img.shields.io/badge/Kubernetes-sprint%2010-326CE5)
 ![Helm](https://img.shields.io/badge/Helm-umbrella%20chart-0F1689)
 ![Apache Kafka](https://img.shields.io/badge/Apache%20Kafka-sprint%2011-231F20)
+![Zipkin](https://img.shields.io/badge/Zipkin-tracing-FE6A00)
+![Prometheus](https://img.shields.io/badge/Prometheus-metrics-E6522C)
+![Grafana](https://img.shields.io/badge/Grafana-dashboards-F46800)
+![ELK](https://img.shields.io/badge/ELK-logs-005571)
 ![Spring Cloud Gateway](https://img.shields.io/badge/Spring%20Cloud%20Gateway-API-6DB33F)
 ![Spring Cloud Contract](https://img.shields.io/badge/Spring%20Cloud%20Contract-4.1-0A2540)
 
@@ -21,7 +25,7 @@
 ![Thymeleaf](https://img.shields.io/badge/Thymeleaf-UI-005F0F)
 ![JUnit 5](https://img.shields.io/badge/JUnit-5-25A162)
 
-Учебный микросервисный проект банка (**module 3**, Yandex Practicum; **sprint 9** — Docker Compose / Eureka / Config Server; **sprint 10** — Kubernetes / Helm; **sprint 11** — Apache Kafka).
+Учебный микросервисный проект банка (**module 3**, Yandex Practicum; **sprint 9** — Docker Compose / Eureka / Config Server; **sprint 10** — Kubernetes / Helm; **sprint 11** — Apache Kafka; **sprint 12** — observability: Zipkin, Prometheus, Grafana, ELK).
 
 ![Схема взаимодействия сервисов](./docs/img/Image.png)
 
@@ -45,6 +49,7 @@
 - **Контракты:** Spring Cloud Contract — producer `accounts-service`, consumers `cash-service` и `transfer-service` (проверка против stubs)  
 - **Отказоустойчивость:** Resilience4j Circuit Breaker + Retry на вызовах **Accounts** из **cash-service** / **transfer-service**  
 - **Контейнеризация:** Docker, Docker Compose; **оркестрация (sprint 10):** Kubernetes, Helm (`helm/my-bank-app`)  
+- **Observability (sprint 12):** Micrometer Tracing → Zipkin; Actuator + Prometheus; Grafana (дашборды/алерты); JSON-логи → Logstash → Elasticsearch → Kibana (модуль `observability-support/`, Helm subcharts `zipkin/`, `prometheus/`, `grafana/`, `elk/`)  
 - **Externalized Config:** Spring Cloud Config Server; канонические YAML для приложений лежат в **`config-server/src/main/resources/config/`** — общий **`application.yml`** (Eureka, Actuator) и файлы **`{spring.application.name}.yml`**. В каждом модуле **`application-local.yml`** задаёт те же значения для автономного старта без Config Server; при доступном сервере конфигурации последний импорт в **`application.yml`** подмешивает определения поверх локальных. В Docker Compose для клиентов задаётся **`CONFIG_SERVER_HOST=config-server`** (хост Config Server вместо `localhost`).
 
 Источник истины по балансу — **accounts-service**; **cash** и **transfer** хранят у себя записи аудита операций (без дублирования баланса).
@@ -70,6 +75,8 @@
 **Sprint 10:** деплой в локальный Kubernetes (Rancher Desktop / k3s) через umbrella-чарт Helm; runtime-конфигурация в ConfigMap/Secret (Eureka и Config Server **не** входят в K8s-контур). Подробности — раздел [Kubernetes (Helm)](#kubernetes-helm) и **[docs/SMOKE_CHECK_SECURE.md](docs/SMOKE_CHECK_SECURE.md)** (режим C).
 
 **Sprint 11:** уведомления через **Kafka** (не REST); в кластере — сабчарт Bitnami Kafka (`helm/my-bank-app/charts/kafka`, KRaft, PVC). Перед первым `helm upgrade` один раз подтянуть зависимости Bitnami: `cd helm/my-bank-app/charts/kafka && helm dependency update` (нужен доступ к `oci://registry-1.docker.io/bitnamicharts`).
+
+**Sprint 12:** observability в K8s — Zipkin, Prometheus, Grafana, ELK; Ingress для UI (`/zipkin`, `/prometheus`, `/grafana`; Kibana на **`http://kibana.localhost/`**). Чек-лист: **[docs/SMOKE_OBSERVABILITY.md](docs/SMOKE_OBSERVABILITY.md)**.
 
 ## Запуск без Docker (локальная разработка)
 
@@ -163,10 +170,14 @@ kubectl -n mybank wait --for=condition=ready pod --all --timeout=600s
 | API (через Ingress) | http://localhost/api/... |
 | Keycloak OIDC | http://localhost/realms/mybank |
 | Keycloak Admin | http://localhost/admin |
+| Zipkin | http://localhost/zipkin/ |
+| Prometheus | http://localhost/prometheus/ |
+| Grafana | http://localhost/grafana/ (`admin` / `admin`) |
+| Kibana | http://kibana.localhost/ |
 
-Логин UI: `demo.user` / `demo`. API с токеном и типичные проблемы K8s — **[docs/SMOKE_CHECK_SECURE.md](docs/SMOKE_CHECK_SECURE.md)** (режим **C**).
+Логин UI: `demo.user` / `demo`. API с токеном и типичные проблемы K8s — **[docs/SMOKE_CHECK_SECURE.md](docs/SMOKE_CHECK_SECURE.md)** (режим **C**). Observability — **[docs/SMOKE_OBSERVABILITY.md](docs/SMOKE_OBSERVABILITY.md)**.
 
-Проверка чарта:
+Проверка чарта (`helm test` — Postgres, Keycloak, Kafka, Zipkin, Prometheus, Logstash):
 
 ```bash
 helm lint helm/my-bank-app
