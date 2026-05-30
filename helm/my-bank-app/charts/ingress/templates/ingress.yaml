@@ -17,6 +17,24 @@ spec:
     - host: {{ .Values.hosts.app | quote }}
       http:
         paths:
+          {{- if .Values.observability.prometheus.enabled | default true }}
+          - path: {{ .Values.paths.prometheus }}
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "ingress.backendService" (list . "prometheus") }}
+                port:
+                  number: {{ .Values.backendPorts.prometheus }}
+          {{- end }}
+          {{- if .Values.observability.grafana.enabled | default true }}
+          - path: {{ .Values.paths.grafana }}
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "ingress.backendService" (list . "grafana") }}
+                port:
+                  number: {{ .Values.backendPorts.grafana }}
+          {{- end }}
           - path: {{ .Values.paths.gateway }}
             pathType: Prefix
             backend:

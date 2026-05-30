@@ -14,7 +14,9 @@ import com.mybank.transfer.client.AccountsClient;
 import com.mybank.transfer.kafka.NotificationEventPublisher;
 import com.mybank.transfer.persistence.TransferRecordEntity;
 import com.mybank.transfer.persistence.TransferRecordRepository;
+import com.mybank.observability.BusinessMetrics;
 import com.mybank.security.support.JwtUsernameResolver;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,6 +30,7 @@ class TransferServiceTest {
     private NotificationEventPublisher notificationEventPublisher;
     private TransferRecordRepository transferRecordRepository;
     private JwtUsernameResolver jwtUsernameResolver;
+    private SimpleMeterRegistry meterRegistry;
     private TransferService transferService;
 
     @BeforeEach
@@ -36,12 +39,14 @@ class TransferServiceTest {
         notificationEventPublisher = Mockito.mock(NotificationEventPublisher.class);
         transferRecordRepository = Mockito.mock(TransferRecordRepository.class);
         jwtUsernameResolver = Mockito.mock(JwtUsernameResolver.class);
+        meterRegistry = new SimpleMeterRegistry();
         when(jwtUsernameResolver.resolve("demo.user")).thenReturn("demo.user");
         transferService = new TransferService(
                 accountsClient,
                 notificationEventPublisher,
                 transferRecordRepository,
                 jwtUsernameResolver,
+                new BusinessMetrics(meterRegistry),
                 "demo.user"
         );
     }
@@ -74,6 +79,7 @@ class TransferServiceTest {
 
         assertThrows(TransferOperationException.class, () -> transferService.transfer(request));
         verify(transferRecordRepository, never()).save(any());
+        assertEquals(0.0, transferFailedCount());
     }
 
     @Test
@@ -90,6 +96,13 @@ class TransferServiceTest {
 
         verify(accountsClient).deposit("demo.user", new BigDecimal("100.00"));
         verify(transferRecordRepository, never()).save(any());
+        assertEquals(1.0, transferFailedCount());
+    }
+
+    private double transferFailedCount() {
+        return meterRegistry.find(BusinessMetrics.TRANSFER_FAILED).counters().stream()
+                .mapToDouble(counter -> counter.count())
+                .sum();
     }
 
     private AccountProfileView profile(String username, String balance) {

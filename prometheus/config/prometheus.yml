@@ -1,0 +1,1 @@
+# Reference copy; runtime config is rendered from prometheus/templates/configmap.yaml (Helm).

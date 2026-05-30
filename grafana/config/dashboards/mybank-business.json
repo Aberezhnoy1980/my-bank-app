@@ -1,0 +1,50 @@
+{
+  "title": "MyBank Business metrics",
+  "uid": "mybank-business",
+  "tags": ["mybank", "business"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "panels": [
+    {
+      "id": 1,
+      "title": "Failed cash withdraw by user",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum(increase(mybank_cash_withdraw_failed_total[5m])) by (username)",
+          "legendFormat": "{{username}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Failed transfers",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum(increase(mybank_transfer_failed_total[5m])) by (sender, recipient)",
+          "legendFormat": "{{sender}} -> {{recipient}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Notification delivery failures",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum(increase(mybank_notification_delivery_failed_total[5m])) by (username)",
+          "legendFormat": "{{username}}",
+          "refId": "A"
+        }
+      ]
+    }
+  ]
+}

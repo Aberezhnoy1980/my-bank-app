@@ -1,0 +1,18 @@
+enabled: true
+
+image:
+  repository: prom/prometheus
+  tag: "v2.53.0"
+  pullPolicy: IfNotPresent
+
+service:
+  port: 9090
+
+retention: 6h
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 256Mi
+  limits:
+    memory: 512Mi

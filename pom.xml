@@ -12,6 +12,7 @@
 
     <modules>
         <module>notification-events</module>
+        <module>observability-support</module>
         <module>security-support</module>
         <module>front</module>
         <module>gateway</module>

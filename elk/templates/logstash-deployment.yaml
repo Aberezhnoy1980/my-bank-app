@@ -1,0 +1,50 @@
+{{- if .Values.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "elk.logstashFullname" . }}
+  labels:
+    {{- include "elk.labels" . | nindent 4 }}
+    app.kubernetes.io/component: logstash
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "elk.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: logstash
+  template:
+    metadata:
+      labels:
+        {{- include "elk.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: logstash
+    spec:
+      containers:
+        - name: logstash
+          image: "{{ .Values.image.logstash.repository }}:{{ .Values.image.logstash.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: tcp
+              containerPort: {{ .Values.logstash.service.port }}
+          env:
+            - name: LS_JAVA_OPTS
+              value: "-Xms256m -Xmx256m"
+          volumeMounts:
+            - name: pipeline
+              mountPath: /usr/share/logstash/pipeline
+          readinessProbe:
+            tcpSocket:
+              port: tcp
+            initialDelaySeconds: 45
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: tcp
+            initialDelaySeconds: 90
+            periodSeconds: 20
+          resources:
+            {{- toYaml .Values.logstash.resources | nindent 12 }}
+      volumes:
+        - name: pipeline
+          configMap:
+            name: {{ include "elk.logstashConfigMapName" . }}
+{{- end }}

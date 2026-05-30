@@ -1,0 +1,77 @@
+apiVersion: 1
+groups:
+  - orgId: 1
+    name: mybank-alerts
+    folder: MyBank
+    interval: 1m
+    rules:
+      - uid: mybank-http-5xx
+        title: HTTP 5xx detected
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: sum(rate(http_server_requests_seconds_count{status=~"5.."}[5m]))
+              instant: true
+              refId: A
+          - refId: C
+            relativeTimeRange:
+              from: 0
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    params: [0]
+                    type: gt
+                  operator:
+                    type: and
+                  reducer:
+                    type: last
+                  type: query
+        for: 2m
+        labels:
+          severity: warning
+        noDataState: OK
+        execErrState: Error
+      - uid: mybank-cash-withdraw-fail
+        title: Cash withdraw failures
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: sum(increase(mybank_cash_withdraw_failed_total[5m]))
+              instant: true
+              refId: A
+          - refId: C
+            relativeTimeRange:
+              from: 0
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              conditions:
+                - evaluator:
+                    params: [0]
+                    type: gt
+                  operator:
+                    type: and
+                  reducer:
+                    type: last
+                  type: query
+        for: 1m
+        labels:
+          severity: warning
+        noDataState: OK
+        execErrState: Error

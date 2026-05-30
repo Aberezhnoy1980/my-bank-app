@@ -1,0 +1,47 @@
+enabled: true
+
+image:
+  pullPolicy: IfNotPresent
+  elasticsearch:
+    repository: docker.elastic.co/elasticsearch/elasticsearch
+    tag: "8.15.0"
+  logstash:
+    repository: docker.elastic.co/logstash/logstash
+    tag: "8.15.0"
+  kibana:
+    repository: docker.elastic.co/kibana/kibana
+    tag: "8.15.0"
+
+elasticsearch:
+  service:
+    port: 9200
+  persistence:
+    enabled: true
+    size: 2Gi
+    storageClass: ""
+  resources:
+    requests:
+      cpu: 100m
+      memory: 768Mi
+    limits:
+      memory: 1Gi
+
+logstash:
+  service:
+    port: 5044
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      memory: 768Mi
+
+kibana:
+  service:
+    port: 5601
+  resources:
+    requests:
+      cpu: 50m
+      memory: 512Mi
+    limits:
+      memory: 768Mi

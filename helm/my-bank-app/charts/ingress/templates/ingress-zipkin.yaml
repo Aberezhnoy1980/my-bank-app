@@ -1,0 +1,29 @@
+{{- if and .Values.enabled (.Values.observability.zipkin.enabled | default true) }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "ingress.fullname" . }}-zipkin
+  labels:
+    {{- include "ingress.labels" . | nindent 4 }}
+    app.kubernetes.io/component: observability-zipkin
+  {{- if .Values.observability.zipkinStripPrefix | default true }}
+  annotations:
+    traefik.ingress.kubernetes.io/router.middlewares: {{ .Release.Namespace }}-zipkin-stripprefix@kubernetescrd
+    traefik.ingress.kubernetes.io/router.priority: "10000"
+  {{- end }}
+spec:
+  {{- if .Values.className }}
+  ingressClassName: {{ .Values.className | quote }}
+  {{- end }}
+  rules:
+    - host: {{ .Values.hosts.app | quote }}
+      http:
+        paths:
+          - path: {{ .Values.paths.zipkin }}
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "ingress.backendService" (list . "zipkin") }}
+                port:
+                  number: {{ .Values.backendPorts.zipkin }}
+{{- end }}

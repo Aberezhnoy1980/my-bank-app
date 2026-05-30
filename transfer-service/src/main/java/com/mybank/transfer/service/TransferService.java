@@ -7,6 +7,7 @@ import com.mybank.transfer.client.AccountsClient;
 import com.mybank.transfer.kafka.NotificationEventPublisher;
 import com.mybank.transfer.persistence.TransferRecordEntity;
 import com.mybank.transfer.persistence.TransferRecordRepository;
+import com.mybank.observability.BusinessMetrics;
 import com.mybank.security.support.JwtUsernameResolver;
 import java.util.Objects;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,6 +20,7 @@ public class TransferService {
     private final NotificationEventPublisher notificationEventPublisher;
     private final TransferRecordRepository transferRecordRepository;
     private final JwtUsernameResolver jwtUsernameResolver;
+    private final BusinessMetrics businessMetrics;
     private final String senderUsername;
 
     public TransferService(
@@ -26,12 +28,14 @@ public class TransferService {
             NotificationEventPublisher notificationEventPublisher,
             TransferRecordRepository transferRecordRepository,
             JwtUsernameResolver jwtUsernameResolver,
+            BusinessMetrics businessMetrics,
             @Value("${app.transfer.sender-username}") String senderUsername
     ) {
         this.accountsClient = accountsClient;
         this.notificationEventPublisher = notificationEventPublisher;
         this.transferRecordRepository = transferRecordRepository;
         this.jwtUsernameResolver = jwtUsernameResolver;
+        this.businessMetrics = businessMetrics;
         this.senderUsername = senderUsername;
     }
 
@@ -39,31 +43,35 @@ public class TransferService {
         String sender = jwtUsernameResolver.resolve(senderUsername);
         validateParticipants(sender, request.recipientUsername());
 
-        // Validate recipient existence before balance changes.
-        accountsClient.getByUsername(request.recipientUsername());
-
-        AccountProfileView senderAfterWithdraw = accountsClient.withdraw(sender, request.amount());
         try {
-            AccountProfileView recipientAfterDeposit = accountsClient.deposit(request.recipientUsername(), request.amount());
-            transferRecordRepository.save(new TransferRecordEntity(sender, request.recipientUsername(), request.amount()));
-            return new TransferResponse(
-                    "TRANSFER_SUCCESS",
-                    sender,
-                    request.recipientUsername(),
-                    request.amount(),
-                    senderAfterWithdraw.balance(),
-                    recipientAfterDeposit.balance()
-            );
+            accountsClient.getByUsername(request.recipientUsername());
 
+            AccountProfileView senderAfterWithdraw = accountsClient.withdraw(sender, request.amount());
+            try {
+                AccountProfileView recipientAfterDeposit =
+                        accountsClient.deposit(request.recipientUsername(), request.amount());
+                transferRecordRepository.save(
+                        new TransferRecordEntity(sender, request.recipientUsername(), request.amount()));
+                return new TransferResponse(
+                        "TRANSFER_SUCCESS",
+                        sender,
+                        request.recipientUsername(),
+                        request.amount(),
+                        senderAfterWithdraw.balance(),
+                        recipientAfterDeposit.balance()
+                );
+            } catch (RuntimeException ex) {
+                accountsClient.deposit(sender, request.amount());
+                throw ex;
+            } finally {
+                notificationEventPublisher.send(
+                        "TRANSFER_ATTEMPT",
+                        "Transfer attempt from " + sender + " to " + request.recipientUsername()
+                );
+            }
         } catch (RuntimeException ex) {
-            // Best-effort compensation for partial failure.
-            accountsClient.deposit(sender, request.amount());
+            businessMetrics.recordTransferFailed(sender, request.recipientUsername());
             throw ex;
-        } finally {
-            notificationEventPublisher.send(
-                    "TRANSFER_ATTEMPT",
-                    "Transfer attempt from " + sender + " to " + request.recipientUsername()
-            );
         }
     }
 
