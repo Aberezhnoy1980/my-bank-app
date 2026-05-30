@@ -11,11 +11,30 @@ hosts:
 paths:
   front: /
   gateway: /api
-  # Keycloak OIDC + admin console (admin UI: http://localhost/admin).
   keycloakRealms: /realms
   keycloakAdmin: /admin
+  zipkin: /zipkin
+  prometheus: /prometheus
+  grafana: /grafana
+  kibana: /kibana
 
 backendPorts:
   front: 8080
   gateway: 8081
   keycloak: 8080
+  zipkin: 9411
+  prometheus: 9090
+  grafana: 3000
+  kibana: 5601
+
+observability:
+  # Traefik (Rancher Desktop): strip /zipkin prefix before forwarding to Zipkin UI.
+  zipkinStripPrefix: true
+  zipkin:
+    enabled: true
+  prometheus:
+    enabled: true
+  grafana:
+    enabled: true
+  kibana:
+    enabled: true

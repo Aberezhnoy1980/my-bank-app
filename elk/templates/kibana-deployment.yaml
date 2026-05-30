@@ -28,16 +28,20 @@ spec:
           env:
             - name: ELASTICSEARCH_HOSTS
               value: "http://{{ include "elk.elasticsearchFullname" . }}:{{ .Values.elasticsearch.service.port }}"
+            - name: SERVER_BASEPATH
+              value: "/kibana"
+            - name: SERVER_REWRITE_BASE_PATH
+              value: "true"
           readinessProbe:
             httpGet:
-              path: /api/status
+              path: /kibana/api/status
               port: http
             initialDelaySeconds: 60
             periodSeconds: 10
             timeoutSeconds: 5
           livenessProbe:
             httpGet:
-              path: /api/status
+              path: /kibana/api/status
               port: http
             initialDelaySeconds: 60
             periodSeconds: 15
