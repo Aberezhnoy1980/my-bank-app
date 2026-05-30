@@ -26,7 +26,7 @@ Inside containers use service DNS (`http://mybank-gateway:8081`, `http://mybank-
 
 1. **Pods** — `kubectl -n mybank get pods` — all **Running** / **Ready** (allow ~2–3 min after install; Kafka controller/broker may need extra time on first start).
 2. **OIDC** — `curl -fsS http://localhost/realms/mybank/.well-known/openid-configuration | head -c 120` — HTTP 200.
-3. **Kafka (Helm test)** — `helm test mybank -n mybank` — hook `mybank-test-kafka` checks TCP `mybank-kafka:9092`.
+3. **Helm test** — `helm test mybank -n mybank` — hooks for Postgres, Keycloak, Kafka, Zipkin (`/health`), Prometheus (`/prometheus/-/healthy`), Logstash (TCP `5044`). Run when observability pods are **Ready** (Logstash may need ~1–2 min after install).
 4. **API smoke** — token + Gateway via Ingress (below).
 5. **UI** — `http://localhost/` only (not `127.0.0.1`, not `:8080` unless port-forward) — login `demo.user` / `demo`; profile, deposit, withdraw, transfer to `alice.user`.
 6. **Notifications via Kafka** — after deposit/transfer, logs: `kubectl -n mybank logs deploy/mybank-notifications-service --tail=50 | grep "Notification persisted"`; or DB: `kubectl -n mybank exec -it statefulset/mybank-postgres -- psql -U mybank -d mybank -c "SELECT id, event_type, message FROM notifications.notification_event ORDER BY id DESC LIMIT 5;"`.
