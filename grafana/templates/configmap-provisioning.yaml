@@ -1,0 +1,16 @@
+{{- if .Values.enabled }}
+{{- $prometheusUrl := include "grafana.prometheusUrl" . }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "grafana.provisioningConfigMapName" . }}
+  labels:
+    {{- include "grafana.labels" . | nindent 4 }}
+data:
+  datasources.yaml: |
+{{ .Files.Get "config/provisioning/datasources/prometheus.yaml" | replace "PROMETHEUS_URL" $prometheusUrl | indent 4 }}
+  dashboards-provider.yaml: |
+{{ .Files.Get "config/provisioning/dashboards/provider.yaml" | indent 4 }}
+  alerting-rules.yaml: |
+{{ .Files.Get "config/provisioning/alerting/rules.yaml" | indent 4 }}
+{{- end }}

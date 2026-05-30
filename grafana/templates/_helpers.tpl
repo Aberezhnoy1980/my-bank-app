@@ -36,3 +36,15 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- define "grafana.secretName" -}}
 {{- printf "%s-admin" (include "grafana.fullname" .) }}
 {{- end }}
+
+{{- define "grafana.prometheusUrl" -}}
+{{- printf "http://%s-prometheus:9090/prometheus" .Release.Name }}
+{{- end }}
+
+{{- define "grafana.provisioningConfigMapName" -}}
+{{- printf "%s-provisioning" (include "grafana.fullname" .) }}
+{{- end }}
+
+{{- define "grafana.dashboardsConfigMapName" -}}
+{{- printf "%s-dashboards" (include "grafana.fullname" .) }}
+{{- end }}
