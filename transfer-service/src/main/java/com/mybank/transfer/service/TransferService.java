@@ -41,9 +41,9 @@ public class TransferService {
 
     public TransferResponse transfer(TransferRequest request) {
         String sender = jwtUsernameResolver.resolve(senderUsername);
-        try {
-            validateParticipants(sender, request.recipientUsername());
+        validateParticipants(sender, request.recipientUsername());
 
+        try {
             accountsClient.getByUsername(request.recipientUsername());
 
             AccountProfileView senderAfterWithdraw = accountsClient.withdraw(sender, request.amount());

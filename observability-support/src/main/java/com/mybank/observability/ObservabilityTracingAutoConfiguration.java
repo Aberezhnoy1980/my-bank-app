@@ -2,10 +2,12 @@ package com.mybank.observability;
 
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.context.annotation.PropertySource;
 
+/**
+ * Activates when Micrometer Tracing is on the classpath.
+ * Shared defaults are imported via {@code spring.config.import} in {@code application.properties}.
+ */
 @AutoConfiguration
 @ConditionalOnClass(name = "io.micrometer.tracing.Tracer")
-@PropertySource("classpath:application-observability.yml")
 public class ObservabilityTracingAutoConfiguration {
 }
