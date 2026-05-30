@@ -7,6 +7,8 @@ global:
     enabled: true
     # Override full URL if needed; default is http://<release>-zipkin:9411/api/v2/spans
     endpoint: ""
+  elk:
+    enabled: true
   security:
     allowInsecureImages: true
   # Keep global.kafka.enabled in sync with top-level kafka.enabled.

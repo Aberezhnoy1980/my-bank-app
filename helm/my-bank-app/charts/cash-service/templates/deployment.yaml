@@ -27,7 +27,13 @@ spec:
                 name: {{ include "cash-service.postgresSecretName" . }}
           env:
             - name: SPRING_PROFILES_ACTIVE
-              value: {{ .Values.spring.profiles | default .Values.global.spring.profiles | quote }}
+              value: {{ ternary (printf "%s,logstash" (.Values.spring.profiles | default .Values.global.spring.profiles)) (.Values.spring.profiles | default .Values.global.spring.profiles) (.Values.global.elk.enabled | default true) | quote }}
+            {{- if .Values.global.elk.enabled | default true }}
+            - name: LOGSTASH_HOST
+              value: {{ printf "%s-elk-logstash" .Release.Name | quote }}
+            - name: LOGSTASH_PORT
+              value: "5044"
+            {{- end }}
             {{- if .Values.global.zipkin.enabled | default true }}
             - name: ZIPKIN_ENDPOINT
               value: {{ .Values.global.zipkin.endpoint | default (printf "http://%s-zipkin:9411/api/v2/spans" .Release.Name) | quote }}
