@@ -13,7 +13,8 @@ URLs (Ingress host {{ index .Values "ingress" "hosts" "app" | default "localhost
   Zipkin:       http://{{ index .Values "ingress" "hosts" "app" | default "localhost" }}/zipkin
   Prometheus:   http://{{ index .Values "ingress" "hosts" "app" | default "localhost" }}/prometheus
   Grafana:      http://{{ index .Values "ingress" "hosts" "app" | default "localhost" }}/grafana  (admin / admin)
-  Kibana:       http://{{ index .Values "ingress" "hosts" "app" | default "localhost" }}/kibana
+  Kibana:       http://{{ index .Values "ingress" "hosts" "kibana" | default "kibana.localhost" }}/
+  Kibana (pf):  kubectl -n {{ .Values.global.namespace }} port-forward svc/{{ .Release.Name }}-elk-kibana 5601:5601
 
 Keycloak is NOT on the site root (/). Root is the Front app after images are built.
 

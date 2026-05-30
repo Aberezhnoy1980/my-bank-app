@@ -7,6 +7,8 @@ annotations: {}
 
 hosts:
   app: localhost
+  # Separate host avoids Traefik path clash with Front (/) on localhost.
+  kibana: kibana.localhost
 
 paths:
   front: /
@@ -28,7 +30,7 @@ backendPorts:
   kibana: 5601
 
 observability:
-  # Traefik (Rancher Desktop): strip /zipkin prefix before forwarding to Zipkin UI.
+  # Traefik (Rancher Desktop): strip path prefix before forwarding to Zipkin/Kibana UI.
   zipkinStripPrefix: true
   zipkin:
     enabled: true

@@ -9,6 +9,7 @@ metadata:
   {{- if .Values.observability.zipkinStripPrefix | default true }}
   annotations:
     traefik.ingress.kubernetes.io/router.middlewares: {{ .Release.Namespace }}-zipkin-stripprefix@kubernetescrd
+    traefik.ingress.kubernetes.io/router.priority: "10000"
   {{- end }}
 spec:
   {{- if .Values.className }}

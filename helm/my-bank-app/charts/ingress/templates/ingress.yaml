@@ -35,15 +35,6 @@ spec:
                 port:
                   number: {{ .Values.backendPorts.grafana }}
           {{- end }}
-          {{- if .Values.observability.kibana.enabled | default true }}
-          - path: {{ .Values.paths.kibana }}
-            pathType: Prefix
-            backend:
-              service:
-                name: {{ printf "%s-elk-kibana" .Release.Name }}
-                port:
-                  number: {{ .Values.backendPorts.kibana }}
-          {{- end }}
           - path: {{ .Values.paths.gateway }}
             pathType: Prefix
             backend:
